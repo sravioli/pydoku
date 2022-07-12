@@ -14,12 +14,18 @@ from keras.layers import Dense, Dropout, Flatten
 from keras.optimizers import Adam
 from keras.layers.convolutional import Conv2D, MaxPooling2D
 
+import pickle
+
 # settings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PATH = "dataset"
 PATH_LABELS = "labels.csv"
 TEST_RATIO = 0.2
 VALIDATION_RATIO = 0.2
 IMG_DIMS = (32, 32, 3)
+
+BATCH_SIZE = 50
+EPOCHS = 10
+STEPS = 131
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 imgs = []
@@ -207,10 +213,6 @@ def model():
 model = model()
 print(model.summary())
 
-BATCH_SIZE = 50
-EPOCHS = 10
-STEPS = 20_000
-
 history = model.fit(
     DataGen.flow(x_train, y_train, batch_size=BATCH_SIZE),
     steps_per_epoch=STEPS,
@@ -218,3 +220,30 @@ history = model.fit(
     validation_data=(x_validation, y_validation),
     shuffle=1,
 )
+
+plt.figure(1)
+plt.plot(history.history["loss"])
+plt.plot(history.history["val_loss"])
+plt.legend(["training", "validation"])
+plt.title("Loss")
+plt.xlabel("Number of epochs")
+# plt.show()
+
+plt.figure(2)
+plt.plot(history.history["accuracy"])
+plt.plot(history.history["val_accuracy"])
+plt.legend(["training", "validation"])
+plt.title("Accuracy")
+plt.xlabel("Number of epochs")
+
+plt.show()
+
+score = model.evaluate(x_test, y_test, verbose=0)
+print(f"Score: {score[0]}\nAccuracy: {score[1]}")
+
+
+# pickle_output = open("model_trained.h5", "wb")
+# pickle.dump(model, pickle_output)
+# pickle_output.close()
+
+model.save("trained_model.h5")
