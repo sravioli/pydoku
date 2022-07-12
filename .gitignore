@@ -15,3 +15,5 @@
 pydoku/
 commitlint.config.js
 .husky/
+
+pydoky.code-workspace
