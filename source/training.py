@@ -94,7 +94,7 @@ def plot_samples(_samples: list, __classes: list) -> plt.figure:
     plt.show()
 
 
-def preprocess_imgs(image: np.ndarray) -> np.ndarray:
+def preprocess_img(image: np.ndarray) -> np.ndarray:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # grayscale
     image = cv2.equalizeHist(image)  # equalize img (distribute lighting evenly)
     image = image / 255  # normalize img (restrict from [0, 255] to [0, 1])
@@ -107,9 +107,9 @@ def preprocess(
 ) -> np.ndarray:
 
     # preprocess all the images using map() &overwrite arrays
-    X_train = np.array(list(map(preprocess_imgs, X_train)))
-    X_test = np.array(list(map(preprocess_imgs, X_test)))
-    X_validation = np.array(list(map(preprocess_imgs, X_validation)))
+    X_train = np.array(list(map(preprocess_img, X_train)))
+    X_test = np.array(list(map(preprocess_img, X_test)))
+    X_validation = np.array(list(map(preprocess_img, X_validation)))
 
     # add depth to images
     X_train = X_train.reshape(X_train.shape + (1,))
