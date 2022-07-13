@@ -1,15 +1,15 @@
 import numpy as np
 import cv2
 
-import keras
 from keras.models import load_model
 from sklearn.preprocessing import scale
 
-from source.training import preprocess_img
+from training import preprocess_img
 
-# settings
+# constants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 WIDTH, HEIGHT = 640, 480
 THRESHOLD = 75.00
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 def process_img(image: np.ndarray) -> np.ndarray:
@@ -35,46 +35,55 @@ def display(original_img: np.ndarray, _index: int, _probability: float) -> None:
         cv2.FONT_HERSHEY_COMPLEX,  # font face
         1.5,  # font scale
         (0, 0, 255),  # color
-        1.5,  # thickness
+        1,  # thickness
         cv2.LINE_AA,  # line type
     )
 
 
-# load model
-model = load_model("./source/trained_model", compile=True)
+def mainloop(cap) -> None:
+    # open webcam
+    while True:
+        ret, original_img = cap.read()
 
-# initiate capture object
-cap = cv2.VideoCapture(0)
-cap.set(3, WIDTH)
-cap.set(4, HEIGHT)
+        if not ret:
+            print("Cannot receive frame. Exiting...")
+            break
 
-# check
-if not cap.isOpened():
-    raise IOError("Cannot open webcam")
+        image = preprocess_img(original_img)
+        image = process_img(image)
 
-# open webcam
-while True:
-    ret, original_img = cap.read()
+        # predict
+        index, probability = predict(image)
+        print(index, probability)
 
-    if not ret:
-        print("Cannot receive frame. Exiting...")
-        break
+        if probability > THRESHOLD:
+            display(original_img, index, probability)
 
-    image = preprocess_img(original_img)
-    image = process_img(image)
+        cv2.imshow("Webcam Input", original_img)
 
-    # predict
-    index, probability = predict(image)
-    print(index, probability)
+        c = cv2.waitKey(1)
+        if c == 27:
+            break
 
-    if probability > THRESHOLD:
-        display(original_img, index, probability)
+    cap.release()
+    cv2.destroyAllWindows()
 
-    cv2.imshow("Webcam Input", original_img)
 
-    c = cv2.waitKey(1)
-    if c == 27:
-        break
+def main():
+    # load model
+    model = load_model("./source/trained_model", compile=True)
 
-cap.release()
-cv2.destroyAllWindows()
+    # initiate capture object
+    cap = cv2.VideoCapture(0)
+    cap.set(3, WIDTH)
+    cap.set(4, HEIGHT)
+
+    # check
+    if not cap.isOpened():
+        raise IOError("Cannot open webcam")
+
+    mainloop(cap)
+
+
+if __name__ == "__main__":
+    main()
