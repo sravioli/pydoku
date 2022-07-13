@@ -16,7 +16,7 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D
 
 
 # constants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-PATH = "source/dataset"
+PATH = "./source/dataset"
 
 # ratios+
 TEST_RATIO = 0.2
@@ -207,7 +207,7 @@ def main() -> None:
 
     # get model + summary + to csv
     model = get_model(FILTERS, FILTER2, FILTER2, IMG_DIMS, POOL_SIZE, NODES, __classes)
-    csv_logger = CSVLogger("source\model.csv")
+    csv_logger = CSVLogger("./source/model.csv")
     print(model.summary())
 
     # train the model
@@ -221,7 +221,7 @@ def main() -> None:
     )
 
     # save model
-    model.save("../source/trained_model")
+    model.save("./source/trained_model")
 
 
 if __name__ == "__main__":
