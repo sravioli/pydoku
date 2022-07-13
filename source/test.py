@@ -40,50 +40,40 @@ def display(original_img: np.ndarray, _index: int, _probability: float) -> None:
     )
 
 
-def mainloop(cap) -> None:
-    # open webcam
-    while True:
-        ret, original_img = cap.read()
+model = load_model("./source/trained_model", compile=True)
 
-        if not ret:
-            print("Cannot receive frame. Exiting...")
-            break
+# initiate capture object
+cap = cv2.VideoCapture(0)
+cap.set(3, WIDTH)
+cap.set(4, HEIGHT)
 
-        image = preprocess_img(original_img)
-        image = process_img(image)
+# check
+if not cap.isOpened():
+    raise IOError("Cannot open webcam")
 
-        # predict
-        index, probability = predict(image)
-        print(index, probability)
+# open webcam
+while True:
+    ret, original_img = cap.read()
 
-        if probability > THRESHOLD:
-            display(original_img, index, probability)
+    if not ret:
+        print("Cannot receive frame. Exiting...")
+        break
 
-        cv2.imshow("Webcam Input", original_img)
+    image = preprocess_img(original_img)
+    image = process_img(image)
 
-        c = cv2.waitKey(1)
-        if c == 27:
-            break
+    # predict
+    index, probability = predict(image)
+    print(index, probability)
 
-    cap.release()
-    cv2.destroyAllWindows()
+    if probability > THRESHOLD:
+        display(original_img, index, probability)
 
+    cv2.imshow("Webcam Input", original_img)
 
-def main():
-    # load model
-    model = load_model("./source/trained_model", compile=True)
+    c = cv2.waitKey(1)
+    if c == 27:
+        break
 
-    # initiate capture object
-    cap = cv2.VideoCapture(0)
-    cap.set(3, WIDTH)
-    cap.set(4, HEIGHT)
-
-    # check
-    if not cap.isOpened():
-        raise IOError("Cannot open webcam")
-
-    mainloop(cap)
-
-
-if __name__ == "__main__":
-    main()
+cap.release()
+cv2.destroyAllWindows()
