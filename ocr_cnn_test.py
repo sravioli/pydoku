@@ -4,8 +4,7 @@ import cv2
 import keras
 from keras.models import load_model
 
-# from keras.utils.np_utils import probas_to_classes
-import keras.utils
+# import keras.utils
 
 # settings
 WIDTH, HEIGHT = 640, 480
@@ -41,7 +40,6 @@ while True:
 
     # predict
     class_index = model.predict(img)
-    # proba = np_utils.probas_to_classes(class_index)
     proba = np.argmax(class_index, axis=1)
     print(proba[0])
 
