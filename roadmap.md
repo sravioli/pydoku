@@ -21,10 +21,10 @@ graph TD;
     input([import del dataset])
         --> list[Mettere i dati in fila]
         --> label[inserire un label che<br>ci dica quale immagine<br>sia quale]
-    label --> split[Dividere i dati in tre categorie]
-    split --> pre_res[effettuare preprocessing e reshaping]
-    pre_res --> augment["Altera le immagini<br>per renderle più generiche<br>(Rotazione, traslazione, zoom, etc.)"]
-    augment --> onehot[Fare il one hot encoding della matrice]
+        --> split[Dividere i dati in tre categorie]
+        --> pre_res[effettuare preprocessing e reshaping]
+        --> augment["Altera le immagini<br>per renderle più generiche<br>(Rotazione, traslazione, zoom, etc.)"]
+        --> onehot[Fare il one hot encoding della matrice]
 
     model[Creare il modello]
         --> train[iniziare il processo di training]
