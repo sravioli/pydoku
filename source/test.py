@@ -4,7 +4,8 @@ import cv2
 from keras.models import load_model
 from sklearn.preprocessing import scale
 
-from training import preprocess_img
+# from training import preprocess_img
+from utils import PreProcessor
 
 # constants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 WIDTH, HEIGHT = 640, 480
@@ -16,6 +17,14 @@ def process_img(image: np.ndarray) -> np.ndarray:
     image = np.asarray(image)
     image = cv2.resize(image, (32, 32))
     image = image.reshape(1, 32, 32, 1)
+    return image
+
+
+def preprocess_imgs(image: np.ndarray) -> np.ndarray:
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # grayscale
+    image = cv2.equalizeHist(image)  # equalize img (distribute lighting evenly)
+    image = image / 255  # normalize img (restrict from [0, 255] to [0, 1])
+
     return image
 
 
@@ -59,7 +68,7 @@ while True:
         print("Cannot receive frame. Exiting...")
         break
 
-    image = preprocess_img(original_img)
+    image = preprocess_imgs(original_img)
     image = process_img(image)
 
     # predict
