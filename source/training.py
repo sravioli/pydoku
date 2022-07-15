@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import utils as u
 
 from sklearn.model_selection import train_test_split
