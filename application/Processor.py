@@ -13,11 +13,23 @@ class ProcessorHelper:
         pass
 
     def find_vertex(
-        self,
+        # self,
         polygon: np.ndarray,
-        limit: Union[min, max],
-        operation: Union[np.add, np.subtract],
+        limit,
+        operation,
     ) -> tuple:
+        limits, operations = ["min", "max"], ["add", "subtract"]
+        if limit not in limits:
+            raise ValueError(f"Invalid function type expected one of {limits}.")
+        if operation not in operations:
+            raise ValueError(f"Invalid function type expected one of {operations}.")
+
+        if limit == limits[0]:
+            limit = min
+        if operation == operations[0]:
+            operation = np.add
+
+        limit, operation = max, np.subtract
 
         # for ex. in finding the bottom left corner of a polygon, this will
         # have the smallest (x - y) value.
@@ -143,7 +155,7 @@ class Processor:
         for contour in contours:
             area = cv2.contourArea(contour)
             perimeter = cv2.arcLength(contour, closed=True)
-            approx = cv2.approxPoly2D(contour, 0.01 * perimeter, closed=True)
+            approx = cv2.approxPolyDP(contour, 0.01 * perimeter, closed=True)
             corners_number = len(approx)
 
             if corners_number == 4 and area > 1000:
@@ -152,18 +164,18 @@ class Processor:
 
         if polygon is not None:
             # find the vertices of the polygon
-            top_left = ProcessorHelper.find_vertex(polygon, min, np.add)
+            top_left = ProcessorHelper.find_vertex(polygon, "min", "add")
             top_right = ProcessorHelper.find_vertex(
                 polygon,
-                max,
-                np.subtract,
+                "max",
+                "subtract",
             )
             bot_left = ProcessorHelper.find_vertex(
                 polygon,
-                min,
-                np.subtract,
+                "min",
+                "subtract",
             )
-            bot_right = ProcessorHelper.find_vertex(polygon, max, np.add)
+            bot_right = ProcessorHelper.find_vertex(polygon, "max", "add")
 
             # check if it's a square, if not, trash it
             if bot_right[1] - top_right[1] == 0:
@@ -302,3 +314,80 @@ class Processor:
             else:
                 s += str(predictions[i] + 1)
         return s
+
+    # warped_img = warped_image, squares_processed = grid_squares
+    # index = k
+    def draw_digits_on_warped(
+        warped_img: np.ndarray, solved_puzzle: str, squares_processed: np.ndarray
+    ) -> np.ndarray:
+        width = warped_img.shape[0] // 9
+        image_w_text = np.zeros_like(warped_img)
+
+        index = 0
+        # find each square, assuming they have same size
+        for j in range(9):
+            for i in range(9):
+                if type(squares_processed[index]) == int:
+                    # top left corner of bounding box
+                    p1 = i * width, j * width
+
+                    # bottom right corner of bounding box
+                    p2 = (
+                        (i + 1) * width,
+                        (j + 1) * width,
+                    )
+
+                    center = ((p1[0] + p2[0]) // 2, (p1[1] + p2[1]) // 2)
+                    text_size, _ = cv2.getTextSize(
+                        str(solved_puzzle[index]), cv2.FONT_HERSHEY_SIMPLEX, 0.75, 4
+                    )
+                    text_origin = (
+                        center[0] - text_size[0] // 2,
+                        center[1] + text_size[1] // 2,
+                    )
+
+                    cv2.putText(
+                        warped_img,
+                        str(solved_puzzle[index]),
+                        text_origin,
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2,
+                    )
+            index += 1
+        return image_w_text
+
+    def unwarp_image(
+        warped_image: np.ndarray,
+        image_result: np.ndarray,
+        corners: list[tuple],
+        time,
+    ) -> np.ndarray:
+        corners = np.array(corners)
+
+        height, width = warped_image.shape[0], warped_image.shape[1]
+        pts_source = np.array(
+            [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, width - 1]],
+            dtype="float32",
+        )
+        h, status = cv2.findHomography(pts_source, corners)
+        warped = cv2.warpPerspective(
+            warped_image, h, (image_result.shape[1], image_result.shape[0])
+        )
+        cv2.fillConvexPoly(image_result, corners, 0, 16)
+
+        dst_img = cv2.add(image_result, warped)
+
+        dst_img_height, dst_img_width = dst_img.shape[0], dst_img.shape[1]
+        cv2.putText(
+            dst_img,
+            time,
+            (dst_img_width - 250, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.75,
+            (255, 0, 0),
+            2,
+        )
+
+        return dst_img
