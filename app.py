@@ -9,18 +9,20 @@ from keras.models import load_model
 from application import ImagePreProcessor
 
 from application import Processor
+from application import SolveSudoku as sudoku
 
 # constants ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 MODEL = "./source/trained_model"
 ABSPATH = Path(__file__).parent / MODEL
 
+CAMERA = 1
 WIDTH, HEIGHT = 960, 720
 BRIGHTNESS = 150
 FRAME_RATE = 30
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # setup video capture
-cap = cv2.VideoCapture(0)  # num is camera on device
+cap = cv2.VideoCapture(CAMERA)  # num is camera on device
 
 # set windows resolution & brightness
 cap.set(3, WIDTH)
@@ -75,7 +77,26 @@ while True:
             grid_squares = prc.split_in_squares(numbers)
             grid_squares = prc.clean_squares(grid_squares)
 
-            guess_squares = prc.recognize_digits(grid_squares, model)
+            predictions = prc.recognize_digits(grid_squares, model)
+
+            if predictions in seen and seen[predictions] is False:
+                prc.draw_digits_on_warped(
+                    warped_image, seen[predictions][0], grid_squares
+                )
+                image_result = prc.unwarp_image(
+                    warped_image, image_result, corners, seen[predictions][1]
+                )
+
+            else:
+                solved_puzzle, time = sudoku.solve_wrapper(predictions)
+                if solved_puzzle is not None:
+                    prc.draw_digits_on_warped(warped_image, solved_puzzle, grid_squares)
+                    image_result = prc.unwarp_image(
+                        warped_image, image_result, corners, time
+                    )
+                    seen[predictions] = [solved_puzzle, time]
+                else:
+                    seen[predictions] = False
 
     # display the solved sudoku
     cv2.imshow("Webcam", image_result)
