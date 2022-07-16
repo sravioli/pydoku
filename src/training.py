@@ -72,6 +72,7 @@ def main() -> None:
         validation_data=(X_validation, Y_validation),
         shuffle=1,
         callbacks=[logger],
+        # verbose=0 # suppress output from training
     )
 
     # save the model
