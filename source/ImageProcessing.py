@@ -80,7 +80,7 @@ class ImageProcessing:
 
         if self.debug:
             cv2.imshow("DEBUG: INPUT IMAGE", cv2.resize(image, (320, 320)))
-            cv2.waitKey(1500)
+            cv2.waitKey(0)
             cv2.destroyAllWindows()
 
         logger.debug(f"Return image: np.ndarray (too long for display)")
@@ -130,7 +130,7 @@ class ImageProcessing:
 
         if self.debug:
             cv2.imshow("DEBUG: PROCESSED IMAGE", cv2.resize(image, (320, 320)))
-            cv2.waitKey(1500)
+            cv2.waitKey(0)
             cv2.destroyAllWindows()
 
         logger.debug(f"Return processed image – {type(image)}")
