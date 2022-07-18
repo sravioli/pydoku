@@ -49,7 +49,7 @@ def display(original_img: np.ndarray, _index: int, _probability: float) -> None:
     )
 
 
-model = load_model("./source/trained_model", compile=True)
+model = load_model("./src/trained_model", compile=True)
 
 # initiate capture object
 cap = cv2.VideoCapture(0)
@@ -57,7 +57,7 @@ cap.set(3, WIDTH)
 cap.set(4, HEIGHT)
 
 # check
-if not cap.isOpened():
+if not cap.isOpened():  
     raise IOError("Cannot open webcam")
 
 # open webcam
