@@ -8,10 +8,16 @@ import numpy as np
 import cv2
 
 logger.remove()
+
+logger_format = (
+    "<green>{time:DD/MM/YYYY – HH:mm:ss}</green> | "
+    + "<lvl>{level: <8}</lvl> | "
+    + "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> – <lvl>{message}</lvl>"
+)
 logger.add(
     sys.stdout,
     colorize=True,
-    format="<green>{time:DD/MM/YYYY – HH:mm:ss}</green> | <lvl>{level: <8}</lvl> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> – <lvl>{message}</lvl>",
+    format=logger_format,
 )
 
 
