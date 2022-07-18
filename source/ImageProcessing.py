@@ -1,5 +1,4 @@
 # logging
-from cgi import print_arguments
 from loguru import logger
 import sys
 
@@ -8,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import cv2
 
-logger.remove()
 
+logger.remove()
 logger_format = (
     "<green>{time:DD/MM/YYYY – HH:mm:ss}</green> "
     + "| <lvl>{level: <8}</lvl> "
