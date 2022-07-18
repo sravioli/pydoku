@@ -1,4 +1,5 @@
 # logging
+from cgi import print_arguments
 from loguru import logger
 import sys
 
@@ -12,9 +13,7 @@ logger.remove()
 logger_format = (
     "<green>{time:DD/MM/YYYY – HH:mm:ss}</green> "
     + "| <lvl>{level: <8}</lvl> "
-    + "| <cyan>{name}</cyan>"
-    + ":<cyan>{function}</cyan>"
-    + ":<cyan>{line}</cyan> "
+    + "| <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> "
     + "– <lvl>{message}</lvl>"
 )
 logger.add(
