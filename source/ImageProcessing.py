@@ -46,18 +46,20 @@ class ImageProcessing:
             str: The absolute path of the image.
         """
         path = Path(__file__).absolute()
-        logger.debug(f"Input (absolute): {path}")
+        logger.debug(f"Input (absolute) – {type(path)}")
 
         # convert to str, split at "\\", get index of "pydoku", assign list
         t_index = (path_list := str(path).split("\\")).index("pydoku")
-        logger.debug(f"Target index: {t_index} – '{path_list[t_index]}'")
+        logger.debug(f"Find target index: {t_index} – '{path_list[t_index]}'")
 
         # remove elements after "pydoku", join list to str
         final_path = "\\".join(path_list[: t_index + 1])
-        logger.debug(f"Stripped path (absolute): {final_path} – {type(final_path)}")
-        logger.debug(f"Return: {Path(final_path + image_path)}")
+        logger.debug(f"Stripped path (absolute) – {type(final_path)}")
 
-        return str(Path(final_path + image_path))
+        final_path = str(Path(final_path + image_path))
+        logger.debug(f"Return final path – {type(final_path)}")
+
+        return final_path
 
     # read image
     def read(self, image_path: str) -> np.ndarray:
@@ -71,10 +73,10 @@ class ImageProcessing:
             np.ndarray: The imported image.
         """
         absolute_image_path = self.get_path(image_path)
-        logger.debug(f"Input (absolute): {absolute_image_path}")
+        logger.debug(f"Input (absolute path) – {type(absolute_image_path)}")
 
         image = cv2.imread(absolute_image_path)
-        logger.info(f"Read image: {self.done}")
+        logger.debug(f"Read image: {self.done}")
 
         if self.debug:
             cv2.imshow("DEBUG: INPUT IMAGE", cv2.resize(image, (320, 320)))
@@ -131,7 +133,7 @@ class ImageProcessing:
             cv2.waitKey(1500)
             cv2.destroyAllWindows()
 
-        logger.debug("Return: processed image (np.ndarray)")
+        logger.debug(f"Return processed image – {type(image)}")
         return image
 
 
