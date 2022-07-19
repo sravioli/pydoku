@@ -31,7 +31,7 @@ class SudokuExtraction:
 
     def find_contour(
         self, image: np.ndarray, original_image: np.ndarray = None
-    ) -> np.ndarray:
+    ) -> np.ndarray[(1, 2), np.ndarray[(2,), np.intc]]:
         # use Canny Edge Detection Algorithm to detect edges
         image = cv2.Canny(image, 50, 150)
         logger.info(f"Apply Canny edge detection algorithm: {self.done}")
@@ -60,9 +60,9 @@ class SudokuExtraction:
 
     def find_corners(
         self,
-        grid_contour: np.ndarray,
+        grid_contour: np.ndarray[(1, 2), np.ndarray[(2,), np.intc]],
         original_image: np.ndarray = None,
-    ) -> list[np.ndarray]:
+    ) -> list[tuple[int, int]]:
         # the largest contours are the corners of the sudoku
         perimeter = cv2.arcLength(grid_contour, True)
         approx = cv2.approxPolyDP(grid_contour, 0.015 * perimeter, True)
@@ -88,12 +88,13 @@ class SudokuExtraction:
 
             # swap values and return them
             logger.debug(f"Return ordered list of corners – {type(corners)}")
+            print(corners)
             return [top_left, top_right, bot_right, bot_left]
 
     def warp_image(
         self,
         image: np.ndarray,
-        corners: list[np.ndarray],
+        corners: list[tuple[int, int]],
     ) -> np.ndarray:
         # to crop the grid the dimension of the latter are needed.
         # Even if the sudoku is a square, calculating the height and width of
@@ -160,7 +161,7 @@ class SudokuExtraction:
         logger.debug(f"Return warped image – {type(warped_image)}")
         return warped_image
 
-    def extract_cells(self, image: np.ndarray):
+    def extract_cells(self, image: np.ndarray) -> list[np.ndarray]:
         image = original_image.copy()  # don't modify original image
         logger.info(f"Copy original image: {self.done}")
 
@@ -183,32 +184,49 @@ class SudokuExtraction:
 
         # most sudoku are square, but not all. To account for this, find
         # multiple height and width for cells
+        edge_height, edge_width = np.shape(image)[0], np.shape(image)[1]
+        cell_edge_height, cell_edge_width = edge_height // 9, edge_width // 9
+        logger.debug(
+            f"Find cell height and width: {cell_edge_height}, {cell_edge_width}"
+        )
 
-        edge_height = np.shape(image)[0]
-        edge_width = np.shape(image)[1]
-        cell_edge_height = np.shape(image)[0] // 9
-        cell_edge_width = np.shape(image)[1] // 9
-
+        # iterate through length&width of the image, extract cells and store
+        # them in temporary grid
         temp_grid = []
         for i in range(cell_edge_height, edge_height + 1, cell_edge_height):
             for j in range(cell_edge_width, edge_width + 1, cell_edge_width):
+
                 rows = image[i - cell_edge_height : i]
                 temp_grid.append(
                     [rows[k][j - cell_edge_width : j] for k in range(len(rows))]
                 )
+        logger.debug(f"Create temporary grid of cells – {type(temp_grid)}")
 
-        # Creating the 9X9 grid of images
+        # Creating an 9x9 array of the images and converting it into a numpy array, so that it is easier to process.
+
+        # create final 9×9 array of images
         final_grid = []
         for i in range(0, len(temp_grid) - 8, 9):
             final_grid.append(temp_grid[i : i + 9])
-        # Converting all the cell images to np.array
+        logger.debug(f"Create final grid of cells – {type(final_grid)}")
+
+        # convert every item to a Numpy array
         for i in range(9):
             for j in range(9):
                 final_grid[i][j] = np.array(final_grid[i][j])
 
-        cv2.imshow("DEBUG: grid", cv2.resize(final_grid[0][0], (320, 320)))
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        logger.debug(f"Convert cells to Numpy array – {type(final_grid[0][0])}")
+
+        if self.debug:
+            # when debugging, display random cell
+            t, k = list(np.random.randint(0, 8, 2))  # get 2 random in [0, 8]
+
+            cv2.imshow("DEBUG: SAMPLE CELL", cv2.resize(final_grid[t][k], (320, 320)))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            logger.debug(f"Show sample image on row {t} and column {k}: {self.done}")
+
+        return final_grid
 
 
 if __name__ == "__main__":
