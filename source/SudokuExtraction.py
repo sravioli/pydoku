@@ -5,6 +5,9 @@ import sys
 # SudokuExtraction
 import cv2
 import numpy as np
+from imutils import contours
+
+# import os
 
 
 logger.remove()
@@ -143,15 +146,18 @@ class SudokuExtraction:
         grid = cv2.getPerspectiveTransform(corners, dimensions)
         logger.debug(f"Calculate perspective transform – {type(grid)}")
 
-        warp_image = cv2.warpPerspective(image, grid, (width, height))
-        logger.debug(f"Warp image – {type(warp_image)}")
+        warped_image = cv2.warpPerspective(image, grid, (width, height))
+        logger.debug(f"Warp image – {type(warped_image)}")
 
         if self.debug:
-            cv2.imshow("DEBUG: WARPED IMAGE", cv2.resize(warp_image, (320, 320)))
+            cv2.imshow("DEBUG: WARPED IMAGE", cv2.resize(warped_image, (320, 320)))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        return warp_image
+        return warped_image
+
+    def extract_cells(self, image):
+        pass
 
 
 if __name__ == "__main__":
@@ -168,5 +174,6 @@ if __name__ == "__main__":
     grid_contour = sxt.find_contour(image, original_image)
     corners = sxt.find_corners(grid_contour, original_image)
 
-    # crop and warp image
+    # crop+warp image, remove grid lines
     image = sxt.crop_warp_image(image, corners)
+    image = sxt.extract_cells(image)
