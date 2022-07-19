@@ -25,12 +25,29 @@ logger.add(
 
 class SudokuExtractor:
     def __init__(self, debug: bool = False):
+        """Utility class to extract the sudoku grid from an image.
+
+        Args:
+            debug (bool, optional): Whether or not to display the various
+                steps. Defaults to False.
+        """
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
 
     def find_contour(
         self, image: np.ndarray, original_image: np.ndarray = None
     ) -> np.ndarray[(1, 2), np.ndarray[(2,), np.intc]]:
+        """Finds the sudoku grid contour by assuming that the latter is the largest contour in the image.
+
+        Args:
+            image (np.ndarray): The processed image from which to extract the
+                contour.
+            original_image (np.ndarray, optional): The original image. Used for
+                debugging purposes. Defaults to None.
+
+        Returns:
+            np.ndarray: The contour of the sudoku grid.
+        """
         # use Canny Edge Detection Algorithm to detect edges
         image = cv2.Canny(image, 50, 150)
         logger.info(f"Apply Canny edge detection algorithm: {self.done}")
@@ -62,6 +79,18 @@ class SudokuExtractor:
         grid_contour: np.ndarray[(1, 2), np.ndarray[(2,), np.intc]],
         original_image: np.ndarray = None,
     ) -> list[tuple[int, int]]:
+        """Finds the corners of the sudoku grid from the given contour.
+
+        Args:
+            grid_contour (np.ndarray): The contour of the sudoku grid.
+            original_image (np.ndarray, optional): The original image, used for debugging purposes. Defaults to None.
+
+        Returns:
+            list[tuple[int, int]]: A list containing 4 tuples containing 2
+                ints, for example: [(<int>, <int>) * 4]. The order of the
+                coordinates is as follows: [top_left, top_right, bot_right,
+                bot_left].
+        """
         # the largest contours are the corners of the sudoku
         perimeter = cv2.arcLength(grid_contour, True)
         approx = cv2.approxPolyDP(grid_contour, 0.015 * perimeter, True)
@@ -95,6 +124,18 @@ class SudokuExtractor:
         image: np.ndarray,
         corners: list[tuple[int, int]],
     ) -> np.ndarray:
+        """Warps the given image by using the given corners.
+
+        Args:
+            image (np.ndarray): The (original) image to warp.
+            corners (list[tuple[int, int]]): A list containing 4 tuples
+                containing 2 ints, for example: [(<int>, <int>) * 4]. The
+                preferred order of the coordinates is as follows: [top_left,
+                top_right, bot_right, bot_left].
+
+        Returns:
+            np.ndarray: The warped image.
+        """
         # to crop the grid the dimension of the latter are needed.
         # Even if the sudoku is a square, calculating the height and width of
         # the grid ensures that any useful part of the image will not be cropped
@@ -161,6 +202,15 @@ class SudokuExtractor:
         return warped_image
 
     def extract_cells(self, image: np.ndarray) -> list[np.ndarray]:
+        """Extracts every cell in the grid.
+
+        Args:
+            image (np.ndarray): The (original) image from which to extract the
+                cells.
+
+        Returns:
+            list[np.ndarray]: A list of the extracted cells.
+        """
         image = original_image.copy()  # don't modify original image
         logger.info(f"Copy original image: {self.done}")
 
