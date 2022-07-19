@@ -2,7 +2,7 @@
 from loguru import logger
 import sys
 
-# ImagePreprocessing
+# ImagePreprocessor
 from pathlib import Path
 import numpy as np
 import cv2
@@ -22,7 +22,7 @@ logger.add(
 )
 
 
-class ImageProcessing:
+class ImageProcessor:
     def __init__(self, debug: bool = False) -> np.ndarray:
         """Utility class to read and preprocess an input image.
 
@@ -137,7 +137,7 @@ class ImageProcessing:
 
 
 if __name__ == "__main__":
-    ipr = ImageProcessing(debug=True)
+    ipr = ImageProcessor(debug=True)
 
     # read image and process it
     image = ipr.read("/inspo/test_imgs/sudoku.jpg")

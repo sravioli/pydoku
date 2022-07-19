@@ -2,12 +2,11 @@
 from loguru import logger
 import sys
 
-# SudokuExtraction
+# SudokuExtractor
 import cv2
 import numpy as np
-from imutils import contours
 
-# import os
+# from pathlib import Path
 
 
 logger.remove()
@@ -24,7 +23,7 @@ logger.add(
 )
 
 
-class SudokuExtraction:
+class SudokuExtractor:
     def __init__(self, debug: bool = False):
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
@@ -214,7 +213,6 @@ class SudokuExtraction:
         for i in range(9):
             for j in range(9):
                 final_grid[i][j] = np.array(final_grid[i][j])
-
         logger.debug(f"Convert cells to Numpy array – {type(final_grid[0][0])}")
 
         if self.debug:
@@ -226,14 +224,37 @@ class SudokuExtraction:
             cv2.destroyAllWindows()
             logger.debug(f"Show sample image on row {t} and column {k}: {self.done}")
 
+        # # create folder for cells
+        # Path("./source/grid_cells").mkdir(parents=True, exist_ok=True)
+
+        # # try to delete previous files
+        # try:
+        #     for i in range(9):
+        #         for j in range(9):
+        #             Path.unlink(
+        #                 f"./source/grid_cells/cell_{str(i)},{str(j)}.jpg",
+        #             )
+        #     Path.rmdir("./source/grid_cells")
+        # except:
+        #     pass
+
+        # # save current image to disk
+        # for i in range(9):
+        #     for j in range(9):
+        #         cv2.imwrite(
+        #             str(f"./source/grid_cells/cell_{str(i)},{str(j)}.jpg"),
+        #             final_grid[i][j],
+        #         )
+
+        logger.debug(f"Return list of grid cells: {type(final_grid)}")
         return final_grid
 
 
 if __name__ == "__main__":
-    import ImageProcessing
+    import ImageProcessor
 
-    ipr = ImageProcessing.ImageProcessing(debug=True)
-    sxt = SudokuExtraction(debug=True)
+    ipr = ImageProcessor.ImageProcessor(debug=True)
+    sxt = SudokuExtractor(debug=True)
 
     # get image and process it
     original_image = ipr.read("/inspo/test_imgs/sudoku.jpg")
@@ -243,6 +264,8 @@ if __name__ == "__main__":
     grid_contour = sxt.find_contour(image, original_image)  # var2 for debug
     corners = sxt.find_corners(grid_contour, original_image)  # var2 for debug
 
-    # crop+warp image, remove grid lines
+    # crop+warp image
     original_image = sxt.warp_image(original_image, corners)
+
+    # extract cells from warped original image
     image = sxt.extract_cells(original_image)
