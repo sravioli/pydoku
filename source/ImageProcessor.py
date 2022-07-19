@@ -27,7 +27,8 @@ class ImageProcessor:
         """Utility class to read and preprocess an input image.
 
         Args:
-            debug (bool, optional): Option used for displaying images. Defaults to False.
+            debug (bool, optional): Whether or not to display the various
+                steps. Defaults to False.
         """
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
