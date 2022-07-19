@@ -48,10 +48,10 @@ class SudokuExtraction:
             grid_contour = max(contours, key=cv2.contourArea)
             logger.debug(f"Find grid contour – length: {len(grid_contour)}")
 
-            cv2.drawContours(original_image, [grid_contour], 0, (255, 0, 0), 5)
-
         if self.debug:
-            cv2.imshow("DEBUG: GRID CONTOUR", cv2.resize(original_image, (320, 320)))
+            copy = original_image.copy()
+            cv2.drawContours(copy, [grid_contour], 0, (255, 0, 0), 5)
+            cv2.imshow("DEBUG: GRID CONTOUR", cv2.resize(copy, (320, 320)))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -72,11 +72,12 @@ class SudokuExtraction:
         logger.debug(f"Find corners of sudoku grid – {type(corners)}")
 
         if original_image is not None and self.debug:
+            copy = original_image.copy()
             for corner in corners:
-                cv2.circle(original_image, corner, 10, (255, 0, 255), -1)
+                cv2.circle(copy, corner, 10, (255, 0, 255), -1)
             logger.info(f"Draw corners: {self.done}")
 
-            cv2.imshow("DEBUG: GRID CORNERS", cv2.resize(original_image, (320, 320)))
+            cv2.imshow("DEBUG: GRID CORNERS", cv2.resize(copy, (320, 320)))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -86,10 +87,10 @@ class SudokuExtraction:
             logger.debug(f"Swapping corners coordinates order: {self.done}")
 
             # swap values and return them
-            logger.debug(f"Return list of corners – {type(corners)}")
+            logger.debug(f"Return ordered list of corners – {type(corners)}")
             return [top_left, top_right, bot_right, bot_left]
 
-    def crop_warp_image(
+    def warp_image(
         self,
         image: np.ndarray,
         corners: list[np.ndarray],
@@ -113,6 +114,7 @@ class SudokuExtraction:
                 + ((top_right[1] - top_left[1]) ** 2)
             ),
         )
+        logger.debug(f"Get bot values of width: {width_A:.3f}, {width_B:.3f}")
 
         # get bot values of height
         height_A, height_B = (
@@ -124,13 +126,14 @@ class SudokuExtraction:
                 ((top_left[0] - bot_left[0]) ** 2) + ((top_left[1] - bot_left[1]) ** 2)
             ),
         )
+        logger.debug(f"Get both values of height: {height_A:.3f}, {height_B:.3f}")
 
         # get best width and height
         width, height = (
             max(int(width_A), int(width_B)),
             max(int(height_A), int(height_B)),
         )
-        logger.debug(f"Find width and height: {width}, {height}")
+        logger.debug(f"Find optimal width and height: {width}, {height}")
 
         # construct dimensions for the cropped image
         dimensions = np.array(
@@ -154,10 +157,58 @@ class SudokuExtraction:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
+        logger.debug(f"Return warped image – {type(warped_image)}")
         return warped_image
 
-    def extract_cells(self, image):
-        pass
+    def extract_cells(self, image: np.ndarray):
+        image = original_image.copy()  # don't modify original image
+        logger.info(f"Copy original image: {self.done}")
+
+        # turn copy of original image to grayscale
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # VERY IMPORTANT
+        logger.debug(f"Convert copy to grayscale: {self.done}")
+
+        # apply adaptive thresholding, then convert to binary image
+        image = cv2.bitwise_not(
+            cv2.adaptiveThreshold(
+                image,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                101,
+                1,
+            )
+        )
+        logger.debug(f"Threshold image and convert to binary: {self.done}")
+
+        # most sudoku are square, but not all. To account for this, find
+        # multiple height and width for cells
+
+        edge_height = np.shape(image)[0]
+        edge_width = np.shape(image)[1]
+        cell_edge_height = np.shape(image)[0] // 9
+        cell_edge_width = np.shape(image)[1] // 9
+
+        temp_grid = []
+        for i in range(cell_edge_height, edge_height + 1, cell_edge_height):
+            for j in range(cell_edge_width, edge_width + 1, cell_edge_width):
+                rows = image[i - cell_edge_height : i]
+                temp_grid.append(
+                    [rows[k][j - cell_edge_width : j] for k in range(len(rows))]
+                )
+
+        # Creating the 9X9 grid of images
+        final_grid = []
+        for i in range(0, len(temp_grid) - 8, 9):
+            final_grid.append(temp_grid[i : i + 9])
+        # Converting all the cell images to np.array
+        for i in range(9):
+            for j in range(9):
+                final_grid[i][j] = np.array(final_grid[i][j])
+
+        cv2.imshow("DEBUG: grid", cv2.resize(final_grid[0][0], (320, 320)))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
@@ -171,9 +222,9 @@ if __name__ == "__main__":
     image = ipr.preprocess_image(original_image)
 
     # get grid contour and grid corners
-    grid_contour = sxt.find_contour(image, original_image)
-    corners = sxt.find_corners(grid_contour, original_image)
+    grid_contour = sxt.find_contour(image, original_image)  # var2 for debug
+    corners = sxt.find_corners(grid_contour, original_image)  # var2 for debug
 
     # crop+warp image, remove grid lines
-    image = sxt.crop_warp_image(image, corners)
-    image = sxt.extract_cells(image)
+    original_image = sxt.warp_image(original_image, corners)
+    image = sxt.extract_cells(original_image)
