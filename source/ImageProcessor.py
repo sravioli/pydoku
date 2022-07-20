@@ -15,11 +15,7 @@ logger_format = (
     + "| <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> "
     + "– <lvl>{message}</lvl>"
 )
-logger.add(
-    sys.stdout,
-    colorize=True,
-    format=logger_format,
-)
+logger.add(sys.stdout, colorize=True, format=logger_format)
 
 
 class ImageProcessor:
@@ -83,7 +79,7 @@ class ImageProcessor:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        logger.debug(f"Return image: np.ndarray (too long for display)")
+        logger.debug(f"Return read image – {type(image)}")
         return image
 
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
@@ -141,5 +137,5 @@ if __name__ == "__main__":
     ipr = ImageProcessor(debug=True)
 
     # read image and process it
-    image = ipr.read("/inspo/test_imgs/sudoku.jpg")
-    image = ipr.preprocess_image(image)
+    image = ipr.read("/source/test_imgs/sudoku.jpg")
+    process = ipr.preprocess_image(image)

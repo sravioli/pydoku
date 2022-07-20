@@ -16,11 +16,7 @@ logger_format = (
     + "| <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> "
     + "– <lvl>{message}</lvl>"
 )
-logger.add(
-    sys.stdout,
-    colorize=True,
-    format=logger_format,
-)
+logger.add(sys.stdout, colorize=True, format=logger_format)
 
 
 class SudokuExtractor:
