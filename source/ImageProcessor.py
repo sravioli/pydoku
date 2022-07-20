@@ -53,8 +53,8 @@ class ImageProcessor:
         logger.debug(f"Stripped path (absolute) – {type(final_path)}")
 
         final_path = str(Path(final_path + image_path))
-        logger.debug(f"Return final path – {type(final_path)}")
 
+        logger.debug(f"Return final path – {type(final_path)}")
         return final_path
 
     # read image
