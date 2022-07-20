@@ -73,6 +73,7 @@ dependencies:
     - opencv-python==4.6.0.66
     - opt-einsum==3.3.0
     - packaging==21.3
+    - pandas==1.4.3
     - parso==0.8.3
     - pathspec==0.9.0
     - pickleshare==0.7.5
@@ -87,6 +88,7 @@ dependencies:
     - pygments==2.12.0
     - pyparsing==3.0.9
     - python-dateutil==2.8.2
+    - pytz==2022.1
     - pywin32==304
     - pyzmq==23.2.0
     - requests==2.28.1
@@ -94,6 +96,7 @@ dependencies:
     - rsa==4.8
     - scikit-learn==1.1.1
     - scipy==1.8.1
+    - seaborn==0.11.2
     - six==1.16.0
     - sklearn==0.0
     - spinners==0.0.24
