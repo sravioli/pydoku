@@ -1,30 +1,31 @@
-# probably shebang needed
-
 # for logging
-import enum
-from cv2 import log
 from loguru import logger
 import sys
 
-# DataTrainer
-import tensorflow as tf
-from tensorflow import keras
+# ModelTraining
+from pathlib import Path
+import numpy as np
+import cv2
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import itertools
+import pandas as pd
 
+from tensorflow import keras
+
+from keras.models import load_model
+
+from keras.datasets import mnist
 from keras.models import Sequential
-
-
-from keras.callbacks import ReduceLROnPlateau
-from keras.layers import Conv2D, BatchNormalization, Activation
-from keras.layers import MaxPooling2D, Dropout, Flatten, Dense
+from keras.callbacks import ReduceLROnPlateau, CSVLogger
+from keras.layers import Conv2D, BatchNormalization, Activation, MaxPooling2D
+from keras.layers import Dropout, Flatten, Dense, AveragePooling2D
 from keras.regularizers import L2
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
+
 from keras.preprocessing.image import ImageDataGenerator
-
-
-import cv2
-import numpy as np
 
 
 logger.remove()
@@ -34,196 +35,430 @@ logger_format = (
     + "| <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> "
     + "– <lvl>{message}</lvl>"
 )
-logger.add(
-    sys.stdout,
-    colorize=True,
-    format=logger_format,
-)
-
-# https://towardsdatascience.com/going-beyond-99-mnist-handwritten-digits-recognition-cfff96337392
+logger.add(sys.stdout, colorize=True, format=logger_format)
 
 
-class DataTrainer:
+class LeNet:
     def __init__(self, debug: bool = False):
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
         pass
 
-    def load_mnist(self):
-        # define MNIST dataset
-        mnist = keras.datasets.mnist
-        logger.debug(f"Define MNIST - {type(mnist)}")
+    def get_model(self, model_name: str = "LeNet5") -> Sequential:
+        models = ["LeNet5+", "LeNet5", "custom"]
+        if model_name not in models:
+            raise ValueError(
+                f"Unknown model {model_name}. Chose one of the following: {models}"
+            )
+        logger.info(f"Chosen model '{model_name}' is available")
 
+        if model_name == models[0]:  # LeNet5+
+            logger.debug(f"Creating '{model_name}' model...")
+            model = Sequential(
+                [
+                    # 1 – Convolutional2D, 32@32×32 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(
+                        32,
+                        5,
+                        strides=1,
+                        activation="relu",
+                        input_shape=(32, 32, 1),
+                        kernel_regularizer=L2(0.0005),
+                    ),
+                    # 2 – Convolutional2D, 32@28×28 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(32, 5, strides=1, use_bias=False),
+                    BatchNormalization(),  # maintain mean to 0, std to 1
+                    Activation("relu"),  # apply activation function to output.
+                    # 3. Layer – MaxPooling, 32@14x14 ~~~~~~~~~~~~~~~~~~~~~~~~~
+                    MaxPooling2D(pool_size=2, strides=2),
+                    Dropout(0.25),  # sets units to 0 with frequency of 0.25, random
+                    # 4 – Convolutional2D, 64@12×12 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(
+                        64,
+                        3,
+                        strides=1,
+                        activation="relu",
+                        kernel_regularizer=L2(0.0005),
+                    ),
+                    # 5 – Convolutional2D, 64@10×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(filters=64, kernel_size=3, strides=1, use_bias=False),
+                    BatchNormalization(),  # maintain mean to 0, std to 1
+                    Activation("relu"),  # apply activation function to output.
+                    # 6 – MaxPooling2D, 64@5×5 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    MaxPooling2D(pool_size=2, strides=2),
+                    Dropout(0.25),  # randomly set units to 0 with frequency of 0.25
+                    Flatten(),  # flatten input. Does not affect the batch size.
+                    # 7 – Dense, 1×256 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(units=256, use_bias=False),
+                    BatchNormalization(),  # maintain mean to 0, std to 1
+                    Activation("relu"),  # apply activation function to output.
+                    # 8 – Dense, 1×128 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(units=128, use_bias=False),
+                    BatchNormalization(),  # maintain mean to 0, std to 1
+                    Activation("relu"),  # apply activation function to output.
+                    # 9 – Dense, 1×84 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(units=84, use_bias=False),
+                    BatchNormalization(),  # maintain mean to 0, std to 1
+                    Activation("relu"),  # apply activation function to output.
+                    Dropout(0.25),
+                    # 10 – Dense 1×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(units=10, activation="softmax"),
+                ]
+            )
+            logger.debug(f"'{model_name}' model has been created")
+
+            model.compile(
+                Adam(learning_rate=0.001),
+                loss="categorical_crossentropy",
+                metrics=["accuracy"],
+            )
+            logger.debug(f"Compile '{model_name}' model successfully")
+
+        elif model_name == models[1]:  # LeNet5
+            logger.debug(f"Creating '{model_name}' model...")
+            model = Sequential(
+                [
+                    # 1 – Convolutional2D 6@28×28 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(6, (3, 3), activation="relu", input_shape=(32, 32, 1)),
+                    AveragePooling2D(),
+                    # 2 – Convolutional2D, 16@10×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Conv2D(16, (3, 3), activation="relu"),
+                    AveragePooling2D(),
+                    Flatten(),
+                    # 3 – Dense, 1×120 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(120, activation="relu"),
+                    # 4 – Dense 1×84 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(84, activation="relu"),
+                    # 5 – Dense 1×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    Dense(10, activation="softmax"),
+                ]
+            )
+            logger.debug(f"'{model_name}' model has been created")
+
+            # define optimizer
+            Optimizer = RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+            model.compile(
+                Optimizer,
+                loss="categorical_crossentropy",
+                metrics=["accuracy"],
+            )
+            logger.debug(f"Compile '{model_name}' model successfully")
+
+        else:  # custom
+            logger.debug(f"Creating '{model_name}' model")
+            model = Sequential(
+                [
+                    Conv2D(
+                        60,
+                        (5, 5),
+                        input_shape=((32, 32) + (1,)),
+                        activation="relu",
+                    ),
+                    Conv2D(60, (5, 5), activation="relu"),
+                    MaxPooling2D(pool_size=(2, 2)),
+                    Conv2D(30, (3, 3), activation="relu"),
+                    Conv2D(30, (3, 3), activation="relu"),
+                    MaxPooling2D(pool_size=(2, 2)),
+                    Dropout(0.5),
+                    Flatten(),
+                    Dense(500, activation="relu"),
+                    Dropout(0.5),
+                    Dense(10, activation="softmax"),
+                ]
+            )
+            logger.debug(f"'{model_name}' model has been created")
+
+            model.compile(
+                Adam(learning_rate=0.001),
+                loss="categorical_crossentropy",
+                metrics=["accuracy"],
+            )
+            logger.debug(f"Compile '{model_name}' model successfully")
+
+        logger.debug(f"Return '{model_name}' model – {type(model)}")
+        return model
+
+    def load_mnist(self) -> list[tuple[np.ndarray, np.ndarray]]:
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        logger.debug(f"Import dataset: {x_train.shape} – {type(x_test)}")
+        logger.debug(f"Load MNIST dataset: {self.done}")
 
-        if self.debug:
-            sample = np.random.randint(60_000)
-            logger.debug(
-                f"Show random sample #{sample} before normalization: {self.done}"
-            )
-            cv2.imshow(
-                f"DEBUG: SAMPLE #{sample} BEFORE NORMALIZATION",
-                cv2.resize(x_train[sample], (320, 320)),
-            )
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
-        # scale images to [0, 1] range
-        x_train = x_train.astype(np.float32) / 255
-        x_test = x_test.astype(np.float32) / 255
-
-        # Make sure images have shape (28, 28, 1)
-        x_train = np.expand_dims(x_train, -1)
-        x_test = np.expand_dims(x_test, -1)
-        logger.debug(f"Check image dimensions: {x_train.shape}, {x_test.shape}")
-
-        # normalize images
-        mean_train, mean_test = (
-            x_train.mean().astype(np.float32),
-            x_test.mean().astype(np.float32),
-        )
-        std_train, std_test = (
-            x_train.std().astype(np.float32),
-            x_test.std().astype(np.float32),
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_train, y_train, random_state=2022
         )
         logger.debug(
-            f"Find mean and std: {mean_train, mean_test} – {std_train, std_test}"
+            f"Split dataset: {x_train.shape}, {y_train.shape[0]} – {x_test.shape}, {y_test.shape[0]} – {x_val.shape}, {y_val.shape[0]}"
         )
 
-        x_train, x_test = (
-            ((x_train - mean_train) / std_train),
-            ((x_test - mean_test) / std_test),
+        # resize image to 32×32
+        x_train, x_test, x_val = (
+            np.pad(x_train, ((0, 0), (2, 2), (2, 2)), mode="constant"),
+            np.pad(x_test, ((0, 0), (2, 2), (2, 2)), mode="constant"),
+            np.pad(x_val, ((0, 0), (2, 2), (2, 2)), mode="constant"),
         )
-        logger.debug(f"Normalize images: {self.done}")
+        logger.debug(f"Resize images: {x_train.shape} – {x_test.shape} – {x_val.shape}")
+
+        # reshape to 32×32×1
+        x_train, x_test, x_val = (
+            x_train.reshape(x_train.shape + (1,)),
+            x_test.reshape(x_test.shape + (1,)),
+            x_val.reshape(x_val.shape + (1,)),
+        )
+        logger.debug(f"Reshape data: {x_train.shape} – {x_test.shape} – {x_val.shape}")
+
+        # one-hot encode labels
+        y_train = keras.utils.to_categorical(y_train, num_classes=10)
+        y_test = keras.utils.to_categorical(y_test, num_classes=10)
+        y_val = keras.utils.to_categorical(y_val, num_classes=10)
+        logger.debug(f"One-hot encode labels: {self.done}")
+
+        logger.debug(
+            f"Return list of data: {type(mnist_data := [(x_train, y_train), (x_test, y_test), (x_val, y_val)])}"
+        )
+        return mnist_data
+
+    def standardize_data(self, x_mnist: list[np.ndarray]) -> np.ndarray:
 
         if self.debug:
-            logger.debug(
-                f"Show random sample #{sample} after normalization: {self.done}"
-            )
-            cv2.imshow(
-                f"DEBUG: SAMPLE #{sample} AFTER NORMALIZATION",
-                cv2.resize(x_train[sample], (320, 320)),
-            )
+            logger.debug(f"Show sample image before standardization: {self.done}")
+            j = np.random.randint(0, len(x_mnist))
+            k = np.random.randint(0, len(x_mnist[j]))
+            cv2.imshow(f"DEBUG: #{k} BEFORE", cv2.resize(x_mnist[j][k], (320, 320)))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-        return (x_train, y_train), (x_test, y_test)
+        # images need to be standardized to speed up training
+        data = []
+        for x in x_mnist:
+            mean_px = x.mean().astype(np.float32)
+            std_px = x.std().astype(np.float32)
+            x = (x - mean_px) / (std_px)
+            data.append(x)
+        logger.debug(f"All images have been standardized: {self.done}")
 
-    def get_LeNet5(
-        self,
-        train: tuple[np.ndarray, np.ndarray],
-        test: tuple[np.ndarray, np.ndarray],
-    ) -> Sequential:
-        # divide input data
-        x_train, y_train = train
-        x_test, y_test = test
+        if self.debug:
+            logger.debug(f"Show sample image after standardization: {self.done}")
+            cv2.imshow(f"DEBUG: #{k} AFTER", cv2.resize(data[j][k], (320, 320)))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-        # get validation data
-        x_train, x_validation, y_train, y_validation = train_test_split(
-            x_train, y_train, test_size=0.1, random_state=2
-        )
+        logger.debug(f"Return standardized data: {type(data)}")
+        return data
 
-        # create enhanced LeNet5 model
-        model = Sequential(
-            [
-                # 1 – Convolutional2D, 32@32×32 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Conv2D(
-                    32,
-                    (5, 5),
-                    strides=1,
-                    activation="relu",
-                    input_shape=(32, 32, 1),
-                    kernel_regularizer=L2(0.0005),
-                ),
-                # 2 – Convolutional2D, 32@28×28 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Conv2D(32, (5, 5), strides=1, use_bias=False),
-                BatchNormalization(),  # maintain mean to 0, std to 1
-                Activation("relu"),  # apply activation function to output.
-                # 3. Layer – MaxPooling, 32@14x14 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                MaxPooling2D(pool_size=2, strides=2),
-                Dropout(0.25),  # sets units to 0 with frequency of 0.25, random
-                # 4 – Convolutional2D, 64@12×12 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Conv2D(
-                    64,
-                    (3, 3),
-                    strides=1,
-                    activation="relu",
-                    kernel_regularizer=L2(0.0005),
-                ),
-                # 5 – Convolutional2D, 64@10×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Conv2D(filters=64, kernel_size=3, strides=1, use_bias=False),
-                BatchNormalization(),  # maintain mean to 0, std to 1
-                Activation("relu"),  # apply activation function to output.
-                # 6 – MaxPooling2D, 64@5×5 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                MaxPooling2D(pool_size=2, strides=2),
-                Dropout(0.25),  # randomly set units to 0 with frequency of 0.25
-                Flatten(),  # Flatten input. Does not affect the batch size.
-                # 7 – Dense, 1×256 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Dense(units=256, use_bias=False),
-                BatchNormalization(),  # maintain mean to 0, std to 1
-                Activation("relu"),  # apply activation function to output.
-                # 8 – Dense, 1×128 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Dense(units=128, use_bias=False),
-                BatchNormalization(),  # maintain mean to 0, std to 1
-                Activation("relu"),  # apply activation function to output.
-                # 9 – Dense, 1×84 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Dense(units=84, use_bias=False),
-                BatchNormalization(),  # maintain mean to 0, std to 1
-                Activation("relu"),  # apply activation function to output.
-                Dropout(0.25),
-                # 10 – Dense 1×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                Dense(units=10, activation="softmax"),
-            ]
-        )
-
-        model.compile(
-            Adam(learning_rate=0.001),
-            loss="categorical_crossentropy",
-            metrics=["accuracy"],
-        )
-
-        # alter train images
+    def get_generator(self) -> ImageDataGenerator:
         data_gen = ImageDataGenerator(
             featurewise_center=False,  # set input mean to 0 over the dataset
             samplewise_center=False,  # set each sample mean to 0
-            featurewise_std_normalization=False,  # divide inputs by dataset std
+            featurewise_std_normalization=False,  # divide inputs by std of the dataset
             samplewise_std_normalization=False,  # divide each input by its std
             zca_whitening=False,  # apply ZCA whitening
-            rotation_range=10,  # rotate images in the range (deg, 0-180)
+            rotation_range=10,  # randomly rotate images in the range (degrees, 0 to 180)
             zoom_range=0.1,  # Randomly zoom image
-            width_shift_range=0.1,  # shift images horizontally (frac of tot w)
-            height_shift_range=0.1,  # shift images vertically (frac of tot h)
+            width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+            height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
             horizontal_flip=False,  # randomly flip images
             vertical_flip=False,  # randomly flip images
         )
-        data_gen.fit(x_train)
 
-        # by using a Variable Learning Rate a significant performance increase
-        # is registered. As soon as the model detects 'stagnation', the LR is
-        # decreased by a factor of 0.2
-        variable_learning_rate = ReduceLROnPlateau(
-            monitor="val_loss",
-            patience=3,
-            verbose=1,
-            factor=0.5,
-            min_lr=0.00001,
-        )
+        logger.debug(f"Return data generator: {type(data_gen)}")
+        return data_gen
 
-        epochs, batch_size = 30, 86
-        history = model.fit(
-            data_gen.flow(x_train, x_train, batch_size=batch_size),
-            epochs=epochs,
-            validation_data=(x_validation, y_validation),
-            verbose=2,
-            steps_per_epoch=x_train.shape[0] // batch_size,
-            callbacks=[variable_learning_rate],
-        )
+    def get_csv_logger(self, filename: str) -> CSVLogger:
+        path = Path(__file__).parent / "data"
+        path.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Create 'data' directory if not exists: {self.done}")
 
-        return model
+        csv_logger = CSVLogger(f"{path}/{filename}")
+        logger.debug(f"Create csv logger pointing to {path}: {self.done}")
+
+        logger.debug(f"Return csv logger: {type(csv_logger)}")
+        return csv_logger
+
+    def get_learning_rate(self, mode: int = 1 | 0) -> ReduceLROnPlateau:
+        if mode not in [1, 0]:
+            raise ValueError("Unknown learning rate.")
+        logger.info(f"Chosen learning rate is available")
+
+        if mode == 1:
+            rate = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=2)
+            logger.debug(f"Retrieve first learning rate: {self.done}")
+
+        else:
+            rate = ReduceLROnPlateau(
+                monitor="val_loss", patience=3, verbose=1, factor=0.5, min_lr=0.00001
+            )
+            logger.debug(f"Retrieve second learning rate: {self.done}")
+
+        logger.debug(f"Return variable learning rate: {type(rate)}")
+        return rate
+
+    def confusion_matrix(
+        self,
+        model: Sequential,
+        validation: tuple[np.ndarray, np.ndarray],
+        classes: int,
+        action: str = "to_csv",
+        title: str = "Confusion matrix",
+        normalize: bool = False,
+        cmap: plt.cm = plt.cm.Blues,
+    ) -> None:
+        actions = ["plot", "to_csv"]
+        if action not in actions:
+            raise ValueError(f"Unknown action. Chose one of the following: {actions}")
+        logger.info(f"Chosen action '{action}' is available")
+
+        # unpack validation data
+        x_val, y_val = validation
+
+        y_pred = model.predict(x_val)  # predict values from validation dataset
+
+        # convert predictions classes to one hot vectors
+        y_pred = np.argmax(y_pred, axis=1)
+
+        # convert validation observations to one hot vectors
+        y_true = np.argmax(y_val, axis=1)
+
+        # compute confusion matrix
+        confusion_mtrx = confusion_matrix(y_true, y_pred)
+        logger.debug(f"Compute confusion matrix: {type(confusion_matrix)}")
+
+        if action == actions[0]:  # plot the confusion matrix
+            plt.imshow(confusion_mtrx, interpolation="nearest", cmap=cmap)
+            plt.title(title)
+            plt.colorbar()
+            tick_marks = np.arange(len(classes))
+            plt.xticks(tick_marks, classes, rotation=45)
+            plt.yticks(tick_marks, classes)
+
+            if normalize:
+                confusion_mtrx = (
+                    confusion_mtrx.astype("float")
+                    / confusion_mtrx.sum(axis=1)[:, np.newaxis]
+                )
+
+            thresh = confusion_mtrx.max() / 2.0
+            for i, j in itertools.product(
+                range(confusion_mtrx.shape[0]), range(confusion_mtrx.shape[1])
+            ):
+                plt.text(
+                    j,
+                    i,
+                    confusion_mtrx[i, j],
+                    horizontalalignment="center",
+                    color="white" if confusion_mtrx[i, j] > thresh else "black",
+                )
+
+            plt.tight_layout()
+            plt.ylabel("True label")
+            plt.xlabel("Predicted label")
+            plt.show()
+            return confusion_mtrx
+        else:  # export the confusion matrix to csv
+            try:
+                Path.unlink("./source/data/confusion_matrix.csv")
+            except:
+                mtrx = pd.DataFrame(confusion_mtrx)
+                mtrx.to_csv("./source/data/confusion_matrix.csv")
+
+            print("I am able to do that")
+            return
+
+    # def display_errors(self, validation):
+    #     x_val, y_val = validation
+
+    #     y_prediction = model.predict(x_val)
+    #     y_prediction_classes = np.argmax(y_prediction, axis=1)
+
+    #     y_true = np.argmax(y_val, axis=1)
+
+    #     # errors are the difference between predicted labels and true labels
+    #     errors = y_prediction - np.expand_dims(y_true, axis=1) != 0
+
+    #     y_prediction_classes_errors = y_prediction_classes[errors]
+    #     y_prediction_errors = y_prediction[errors]
+    #     y_true_errors = y_true[errors]
+    #     x_val_errors = x_val[errors]
+
+    #     # Probabilities of the wrong predicted numbers
+    #     y_pred_errors_prob = np.max(y_prediction_errors, axis=1)
+
+    #     # Predicted probabilities of the true values in the error set
+    #     true_prob_errors = np.diagonal(
+    #         np.take(y_prediction_errors, y_true_errors, axis=1)
+    #     )
+
+    #     # Difference between the probability of the predicted label and the true label
+    #     delta_pred_true_errors = y_pred_errors_prob - true_prob_errors
+
+    #     # Sorted list of the delta prob errors
+    #     sorted_dela_errors = np.argsort(delta_pred_true_errors)
+
+    #     # Top 6 errors
+    #     most_important_errors = sorted_dela_errors[-6:]
+
+    #     n, rows, cols = 0, 2, 3
+
+    #     fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
+    #     for row in range(rows):
+    #         for col in range(cols):
+    #             error = most_important_errors[n]
+    #             ax[row, col].imshow((x_val_errors[error]).reshape((28, 28)))
+    #             ax[row, col].set_title(
+    #                 "Predicted label :{}\nTrue label :{}".format(
+    #                     y_prediction_classes_errors[error], y_true_errors[error]
+    #                 )
+    #             )
+    #         n += 1
+    #     plt.show()
+
+    def evaluate(
+        self, model: Sequential, x_test: np.ndarray, y_test: np.ndarray
+    ) -> None:
+        score = model.evaluate(x_test, y_test, verbose=0)
+        final = f"Score: {score[0] * 100}\nModel accuracy: {score[1] * 100}"
+        return print(final)
 
 
 if __name__ == "__main__":
-    dt = DataTrainer(debug=True)
-    (x_train, y_train), (x_test, y_test) = dt.load_mnist()
-    LeNet5 = dt.get_LeNet5((x_train, y_train), (x_test, y_test))
+    # define some constants
+    EPOCHS = 30
+    BATCH_SIZE = 86
+    VERBOSE = 1
+
+    # load model class with utility functions
+    LeNet = LeNet(debug=True)
+
+    # retrieve preferred model
+    model = LeNet.get_model("LeNet5")
+
+    # load MNIST dataset and unpack it
+    mnist_data = LeNet.load_mnist()
+    (x_train, y_train), (x_test, y_test), (x_val, y_val) = mnist_data
+
+    # all x_<data> needs to be standardized
+    x_train, x_test, x_val = LeNet.standardize_data([x_train, x_test, x_val])
+
+    # get generator and augment data
+    DataGenerator = LeNet.get_generator()
+    DataGenerator.fit(x_train)
+
+    csv_logger = LeNet.get_csv_logger("history.csv")
+    learning_rate = LeNet.get_learning_rate(0)
+
+    try:
+        model = load_model("./source/LeNet5")
+    except:
+        # train the model
+        history = model.fit(
+            DataGenerator.flow(x_train, y_train, batch_size=BATCH_SIZE),
+            epochs=EPOCHS,
+            validation_data=(x_val, y_val),
+            verbose=VERBOSE,
+            steps_per_epoch=x_train.shape[0] // BATCH_SIZE,
+            callbacks=[csv_logger, learning_rate],
+        )
+
+    model.save("./source/LeNet5")
+
+    LeNet.evaluate(model, x_test, y_test)
+    LeNet.confusion_matrix(model, (x_val, y_val), range(10), action="to_csv")
+    # LeNet.display_errors((x_val, y_val))
