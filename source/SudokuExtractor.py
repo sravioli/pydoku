@@ -6,8 +6,6 @@ import sys
 import cv2
 import numpy as np
 
-from pathlib import Path
-
 from scipy import ndimage
 from keras.models import Sequential
 
@@ -20,7 +18,6 @@ logger_format = (
     + "– <lvl>{message}</lvl>"
 )
 logger.add(sys.stdout, colorize=True, format=logger_format)
-
 
 class SudokuExtractor:
     def __init__(self, debug: bool = False):
@@ -321,9 +318,6 @@ class SudokuExtractor:
 
         logger.debug(f"Sudoku board extracted successfully: {len(board)}")
         return board
-
-
-
 
 
 # for debugging purposes
