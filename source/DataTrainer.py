@@ -421,7 +421,7 @@ class Model:
 # for debugging purposes
 if __name__ == "__main__":
     # define some constants
-    MODEL_NAME = "LeNet5"
+    MODEL_NAME = "LeNet5+"
 
     EPOCHS = 30
     BATCH_SIZE = 86
