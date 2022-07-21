@@ -2354,6 +2354,7 @@
     <bcf:citekey order="2">tensorflow2015-whitepaper</bcf:citekey>
     <bcf:citekey order="3">chollet2015keras</bcf:citekey>
     <bcf:citekey order="4">harris2020array</bcf:citekey>
+    <bcf:citekey order="5">lecun1998gradient</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nty">

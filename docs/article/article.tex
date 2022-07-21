@@ -10,6 +10,10 @@
 \usepackage{datetime2}
 \usepackage{enumitem}
 
+% change datetime2 settings
+\DTMsetdatestyle{ddmmyyyy}
+\DTMsetup{datesep=/}
+
 \usepackage{biblatex}
 \addbibresource{citations.bib}
 
@@ -30,19 +34,35 @@
 
 \section{Introduzione}\label{sec:introduzione}
 
-Il risolutore di sudoku (pydoku) è scritto in Python e fa largo utilizzo di
-librerie come OpenCV~\cite{opencv_library} (\emph{Open source Computer
-Vision}), TensorFlow~\cite{tensorflow2015-whitepaper},
+L'obiettivo ultimo dell'applicazione è quello di risolvere un sudoku da
+un'immagine. Per poter fare ciò sono necessari diversi passaggi:
+
+\begin{enumerate}
+    \item Fornire un'immagine in input contenente un sudoku;
+    \item Localizzare la griglia del sudoku e estrarla;
+    \item Data la griglia, individuare ogni singola cella della stessa;
+    \item Determinare se la cella contiene una cifra e se sì effettuare il
+        riconoscimento ottico dei caratteri (per brevità OCR);
+    \item Risolvere il sudoku mediante un algoritmo;
+    \item Mostrare il sudoku risolto all'utente.
+\end{enumerate}
+
+L'applicazione fa ampio utilizzo delle librerie OpenCV\footnote{acronimo in
+lingua inglese di \emph{Open Source Computer Vision Library}
+}~\cite{opencv_library}, TensorFlow~\cite{tensorflow2015-whitepaper},
 Keras~\cite{chollet2015keras} e NumPy~\cite{harris2020array}.
 
-
-
+Per poter effettuare l'OCR è necessario un modello di Machine Learning.
 
 
 \section{Modello}
 
-\medskip
+Il modello di Machine Learning proposto è un miglioramento della rete neurale
+LeNet5~\cite{lecun1998gradient}
 
+
+
+\bigskip
 \printbibliography
 
 \end{document}
