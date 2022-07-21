@@ -67,6 +67,7 @@ class SudokuSolver:
         print(" └─────────┴─────────┴────────┘")
 
 
+# for debugging purposes
 if __name__ == "__main__":
 
     grid = [
