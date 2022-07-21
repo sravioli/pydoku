@@ -1,7 +1,48 @@
-\documentclass[a4paper, 10pt]{report}
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{csquotes}
+
+\usepackage[colorlinks=true]{hyperref}
+
+\usepackage{datetime2}
+\usepackage{enumitem}
+
+\usepackage{biblatex}
+\addbibresource{citations.bib}
+
 
 \begin{document}
 
+\title{Risolutore di sudoku in Python con OpenCV e Keras}
+\author{Simone Fidanza}
+\date{\today}
 
+
+\maketitle
+
+\begin{abstract}
+    Ancora vuoto...
+\end{abstract}
+
+
+\section{Introduzione}\label{sec:introduzione}
+
+Il risolutore di sudoku (pydoku) è scritto in Python e fa largo utilizzo di
+librerie come OpenCV~\cite{opencv_library} (\emph{Open source Computer
+Vision}), TensorFlow~\cite{tensorflow2015-whitepaper},
+Keras~\cite{chollet2015keras} e NumPy~\cite{harris2020array}.
+
+
+
+
+
+\section{Modello}
+
+\medskip
+
+\printbibliography
 
 \end{document}
