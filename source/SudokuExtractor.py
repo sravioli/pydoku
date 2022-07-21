@@ -6,7 +6,10 @@ import sys
 import cv2
 import numpy as np
 
-# from pathlib import Path
+from pathlib import Path
+
+from imutils import contours
+from scipy import ndimage
 
 
 logger.remove()
@@ -112,7 +115,6 @@ class SudokuExtractor:
 
             # swap values and return them
             logger.debug(f"Return ordered list of corners – {type(corners)}")
-            print(corners)
             return [top_left, top_right, bot_right, bot_left]
 
     def warp_image(
@@ -201,31 +203,12 @@ class SudokuExtractor:
         """Extracts every cell in the grid.
 
         Args:
-            image (np.ndarray): The (original) image from which to extract the
+            image (np.ndarray): The processed image from which to extract the
                 cells.
 
         Returns:
             list[np.ndarray]: A list of the extracted cells.
         """
-        image = original_image.copy()  # don't modify original image
-        logger.info(f"Copy original image: {self.done}")
-
-        # turn copy of original image to grayscale
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # VERY IMPORTANT
-        logger.debug(f"Convert copy to grayscale: {self.done}")
-
-        # apply adaptive thresholding, then convert to binary image
-        image = cv2.bitwise_not(
-            cv2.adaptiveThreshold(
-                image,
-                255,
-                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv2.THRESH_BINARY,
-                101,
-                1,
-            )
-        )
-        logger.debug(f"Threshold image and convert to binary: {self.done}")
 
         # most sudoku are square, but not all. To account for this, find
         # multiple height and width for cells
@@ -247,8 +230,6 @@ class SudokuExtractor:
                 )
         logger.debug(f"Create temporary grid of cells – {type(temp_grid)}")
 
-        # Creating an 9x9 array of the images and converting it into a numpy array, so that it is easier to process.
-
         # create final 9×9 array of images
         final_grid = []
         for i in range(0, len(temp_grid) - 8, 9):
@@ -268,42 +249,75 @@ class SudokuExtractor:
             cv2.imshow("DEBUG: SAMPLE CELL", cv2.resize(final_grid[t][k], (320, 320)))
             cv2.waitKey(0)
             cv2.destroyAllWindows()
-            logger.debug(f"Show sample image on row {t} and column {k}: {self.done}")
-
-        # # create folder for cells
-        # Path("./source/grid_cells").mkdir(parents=True, exist_ok=True)
-
-        # # try to delete previous files
-        # try:
-        #     for i in range(9):
-        #         for j in range(9):
-        #             Path.unlink(
-        #                 f"./source/grid_cells/cell_{str(i)},{str(j)}.jpg",
-        #             )
-        #     Path.rmdir("./source/grid_cells")
-        # except:
-        #     pass
-
-        # # save current image to disk
-        # for i in range(9):
-        #     for j in range(9):
-        #         cv2.imwrite(
-        #             str(f"./source/grid_cells/cell_{str(i)},{str(j)}.jpg"),
-        #             final_grid[i][j],
-        #         )
+            logger.debug(f"Show sample image on {t},{k}: {self.done}")
 
         logger.debug(f"Return list of grid cells: {type(final_grid)}")
         return final_grid
 
+    def is_empty(self, cell: np.ndarray) -> bool:
+        # crop the central square region to ignore the square edges
+        central_cell = cell[5:-5, 5:-5]
+
+        denoised_cell = ndimage.median_filter(central_cell, 3)
+
+        # count the white pixels
+        white_pix_count = np.count_nonzero(denoised_cell)
+        if white_pix_count > 600:
+            empty_cell = False
+        else:
+            empty_cell = True
+
+        return empty_cell
+
+    def construct_grid(self, model, final_grid: np.ndarray):
+        board = []
+        for column in final_grid:
+            temp_column = []
+            for image in column:
+                if not self.is_empty(image):
+                    cell = image[5:-5, 5:-5]
+                    cell = self.find_digit(cell)
+
+                    cell = cv2.resize(cell, (32, 32), cv2.INTER_CUBIC)
+
+                    cv2.imshow("DEBUG: cell", cv2.resize(cell, (320, 320)))
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+
+                    cell = cell[np.newaxis, :, :, np.newaxis]
+
+                    number = model.predict(cell, verbose=0).argmax()
+                    temp_column.append(number)
+                else:
+                    temp_column.append(0)
+            board.append(temp_column)
+
+        return board
+
+    def find_digit(self, cell: np.ndarray) -> np.ndarray:
+        contours, _ = cv2.findContours(cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        big_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(big_contour)
+
+        # draw filled contour on black background
+        mask = np.zeros_like(cell)
+        cv2.drawContours(mask, [big_contour], 0, (255, 255, 255), -1)
+
+        # apply mask to input image
+        new_image = cv2.bitwise_and(cell, mask)
+        return new_image
+
 
 if __name__ == "__main__":
     import ImageProcessor
+    from keras.models import load_model
 
     ipr = ImageProcessor.ImageProcessor(debug=True)
     sxt = SudokuExtractor(debug=True)
 
     # get image and process it
-    original_image = ipr.read("/inspo/test_imgs/sudoku.jpg")
+    original_image = ipr.read("./source/test_imgs/1.jpg")
     image = ipr.preprocess_image(original_image)
 
     # get grid contour and grid corners
@@ -311,7 +325,18 @@ if __name__ == "__main__":
     corners = sxt.find_corners(grid_contour, original_image)  # var2 for debug
 
     # crop+warp image
-    original_image = sxt.warp_image(original_image, corners)
+    image = sxt.warp_image(image, corners)
+    original_warped = sxt.warp_image(original_image, corners)
 
-    # extract cells from warped original image
-    image = sxt.extract_cells(original_image)
+    # rotate if necessary
+    image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+    cells = sxt.extract_cells(image)
+
+    model = load_model("./source/LeNet5")
+    grid_original = sxt.construct_grid(model, cells)
+    print(np.array(grid_original))
+
+    # model = load_model("./source/LeNet5")
+    # grid = sxt.construct_grid(model, cells)
+    # print(np.array(grid))
