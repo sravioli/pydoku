@@ -2,7 +2,7 @@
 
 from source import ImageProcessor, SudokuExtractor, SudokuSolver
 from keras.models import load_model
-import numpy as np
+import cv2
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
     board = sxt.construct_board(model, cells)
 
     # can print unsolved grid
-    # print(np.array(board))
+    slv.print(board)
 
     slv.solve(board)
     slv.print(board)
