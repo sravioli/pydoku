@@ -133,9 +133,14 @@ class ImageProcessor:
         return image
 
 
+# for debugging purposes
 if __name__ == "__main__":
     ipr = ImageProcessor(debug=True)
 
     # read image and process it
     image = ipr.read("/source/test_imgs/sudoku.jpg")
     process = ipr.preprocess_image(image)
+
+
+# remove logging so that no logging happens during app.py execution
+logger.remove()

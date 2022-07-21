@@ -8,8 +8,8 @@ import numpy as np
 
 from pathlib import Path
 
-from imutils import contours
 from scipy import ndimage
+from keras.models import Sequential
 
 
 logger.remove()
@@ -254,61 +254,79 @@ class SudokuExtractor:
         logger.debug(f"Return list of grid cells: {type(final_grid)}")
         return final_grid
 
-    def is_empty(self, cell: np.ndarray) -> bool:
-        # crop the central square region to ignore the square edges
-        central_cell = cell[5:-5, 5:-5]
+    def construct_board(
+        self,
+        model: Sequential,
+        cells_list: list[np.ndarray],
+    ) -> list[int]:
+        """Builds a sudoku board (in the form of a list of list of ints) from
+            the given list of grid cells.
 
-        denoised_cell = ndimage.median_filter(central_cell, 3)
+        Args:
+            model (Sequential): The machine learning model that will predict
+                the value of the digits present in the grid cells.
+            cells_list (list[np.ndarray]): The list of grid cells
 
-        # count the white pixels
-        white_pix_count = np.count_nonzero(denoised_cell)
-        if white_pix_count > 600:
-            empty_cell = False
-        else:
-            empty_cell = True
-
-        return empty_cell
-
-    def construct_grid(self, model, final_grid: np.ndarray):
+        Returns:
+            list[int]: The resulting sudoku board. Empty cells are represented
+                with a zero value.
+        """
+        # list that will contain all the numbers
         board = []
-        for column in final_grid:
-            temp_column = []
-            for image in column:
-                if not self.is_empty(image):
-                    cell = image[5:-5, 5:-5]
-                    cell = self.find_digit(cell)
+        logger.debug(f"Create empty board – {type(board)}, {len(board)}")
 
+        logger.debug(f"Iterating through grid of images...")
+        for column in cells_list:
+            temp_column = []  # column to append to board once filled
+            for cell in column:
+                cell = cell[5:-5, 5:-5]
+                denoised_cell = ndimage.median_filter(cell, 3)
+
+                # count white pixels, if below threshold, image is empty
+                white_pixels = np.count_nonzero(denoised_cell)
+                if white_pixels > 600:
+                    # find contours of cell
+                    contours, _ = cv2.findContours(
+                        cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                    )
+
+                    # largest contour will be desired digit
+                    digit_cntr = max(contours, key=cv2.contourArea)
+                    x, y, w, h = cv2.boundingRect(digit_cntr)
+
+                    # draw black background outside digit
+                    mask = np.zeros_like(cell)
+                    cv2.drawContours(mask, [digit_cntr], 0, (255, 255, 255), -1)
+
+                    # apply mask to input image
+                    cell = cv2.bitwise_and(cell, mask)
+
+                    # standardize image to input in network
+                    mean_px = cell.mean().astype(np.float32)
+                    std_px = cell.std().astype(np.float32)
+                    cell = (cell - mean_px) / (std_px)
+
+                    # resize to 32×32 for LeNet5
                     cell = cv2.resize(cell, (32, 32), cv2.INTER_CUBIC)
 
-                    cv2.imshow("DEBUG: cell", cv2.resize(cell, (320, 320)))
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
-
+                    # make image a 4D tensor for network
                     cell = cell[np.newaxis, :, :, np.newaxis]
 
+                    # predict number. verbose=0 cause output is useless
                     number = model.predict(cell, verbose=0).argmax()
                     temp_column.append(number)
                 else:
                     temp_column.append(0)
             board.append(temp_column)
 
+        logger.debug(f"Sudoku board extracted successfully: {len(board)}")
         return board
 
-    def find_digit(self, cell: np.ndarray) -> np.ndarray:
-        contours, _ = cv2.findContours(cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        big_contour = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(big_contour)
-
-        # draw filled contour on black background
-        mask = np.zeros_like(cell)
-        cv2.drawContours(mask, [big_contour], 0, (255, 255, 255), -1)
-
-        # apply mask to input image
-        new_image = cv2.bitwise_and(cell, mask)
-        return new_image
 
 
+
+
+# for debugging purposes
 if __name__ == "__main__":
     import ImageProcessor
     from keras.models import load_model
@@ -326,7 +344,6 @@ if __name__ == "__main__":
 
     # crop+warp image
     image = sxt.warp_image(image, corners)
-    original_warped = sxt.warp_image(original_image, corners)
 
     # rotate if necessary
     image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -334,9 +351,9 @@ if __name__ == "__main__":
     cells = sxt.extract_cells(image)
 
     model = load_model("./source/LeNet5")
-    grid_original = sxt.construct_grid(model, cells)
+    grid_original = sxt.construct_board(model, cells)
     print(np.array(grid_original))
 
-    # model = load_model("./source/LeNet5")
-    # grid = sxt.construct_grid(model, cells)
-    # print(np.array(grid))
+
+# remove logging so that no logging happens during app.py execution
+logger.remove()

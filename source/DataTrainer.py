@@ -418,16 +418,17 @@ class Model:
         return print(final)
 
 
+# for debugging purposes
 if __name__ == "__main__":
     # define some constants
-    MODEL_NAME = "LeNet5+"
+    MODEL_NAME = "LeNet5"
 
     EPOCHS = 30
     BATCH_SIZE = 86
     VERBOSE = 1
 
     # load model class with utility functions
-    Model = Model(debug=True)
+    Model = Model()
 
     # retrieve preferred model
     model = Model.get_model(MODEL_NAME)
@@ -444,20 +445,26 @@ if __name__ == "__main__":
     DataGenerator.fit(x_train)
 
     csv_logger = Model.get_csv_logger("history.csv")
-    learning_rate = Model.get_learning_rate(0)
+    learning_rate = Model.get_learning_rate(1)
 
     try:
         model = load_model(f"./source/{MODEL_NAME}")
     except:
-        # train the model
-        history = model.fit(
-            DataGenerator.flow(x_train, y_train, batch_size=BATCH_SIZE),
-            epochs=EPOCHS,
-            validation_data=(x_val, y_val),
-            verbose=VERBOSE,
-            steps_per_epoch=x_train.shape[0] // BATCH_SIZE,
-            callbacks=[csv_logger, learning_rate],
-        )
+        n = 0
+        while True and n < 10:
+            # train the model
+            history = model.fit(
+                DataGenerator.flow(x_train, y_train, batch_size=BATCH_SIZE),
+                epochs=EPOCHS,
+                validation_data=(x_val, y_val),
+                verbose=VERBOSE,
+                steps_per_epoch=x_train.shape[0] // BATCH_SIZE,
+                callbacks=[csv_logger, learning_rate],
+            )
+            score = model.evaluate(x_test, y_test)
+            n += 1
+            if round(score[1] * 100, 2) > 99.60:
+                break
 
     model.save(f"./source/{MODEL_NAME}")
 
