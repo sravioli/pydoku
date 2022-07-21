@@ -38,7 +38,7 @@ logger_format = (
 logger.add(sys.stdout, colorize=True, format=logger_format)
 
 
-class LeNet:
+class Model:
     def __init__(self, debug: bool = False):
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
@@ -420,32 +420,34 @@ class LeNet:
 
 if __name__ == "__main__":
     # define some constants
+    MODEL_NAME = "LeNet5+"
+
     EPOCHS = 30
     BATCH_SIZE = 86
     VERBOSE = 1
 
     # load model class with utility functions
-    LeNet = LeNet(debug=True)
+    Model = Model(debug=True)
 
     # retrieve preferred model
-    model = LeNet.get_model("LeNet5")
+    model = Model.get_model(MODEL_NAME)
 
     # load MNIST dataset and unpack it
-    mnist_data = LeNet.load_mnist()
+    mnist_data = Model.load_mnist()
     (x_train, y_train), (x_test, y_test), (x_val, y_val) = mnist_data
 
     # all x_<data> needs to be standardized
-    x_train, x_test, x_val = LeNet.standardize_data([x_train, x_test, x_val])
+    x_train, x_test, x_val = Model.standardize_data([x_train, x_test, x_val])
 
     # get generator and augment data
-    DataGenerator = LeNet.get_generator()
+    DataGenerator = Model.get_generator()
     DataGenerator.fit(x_train)
 
-    csv_logger = LeNet.get_csv_logger("history.csv")
-    learning_rate = LeNet.get_learning_rate(0)
+    csv_logger = Model.get_csv_logger("history.csv")
+    learning_rate = Model.get_learning_rate(0)
 
     try:
-        model = load_model("./source/LeNet5")
+        model = load_model(f"./source/{MODEL_NAME}")
     except:
         # train the model
         history = model.fit(
@@ -457,8 +459,8 @@ if __name__ == "__main__":
             callbacks=[csv_logger, learning_rate],
         )
 
-    model.save("./source/LeNet5")
+    model.save(f"./source/{MODEL_NAME}")
 
-    LeNet.evaluate(model, x_test, y_test)
-    LeNet.confusion_matrix(model, (x_val, y_val), range(10), action="to_csv")
+    Model.evaluate(model, x_test, y_test)
+    Model.confusion_matrix(model, (x_val, y_val), range(10), action="to_csv")
     # LeNet.display_errors((x_val, y_val))
