@@ -463,7 +463,7 @@ if __name__ == "__main__":
             )
             score = model.evaluate(x_test, y_test)
             n += 1
-            if round(score[1] * 100, 2) > 99.60:
+            if round(score[1] * 100, 2) > 99.75:
                 break
 
     model.save(f"./source/{MODEL_NAME}")
