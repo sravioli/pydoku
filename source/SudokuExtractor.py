@@ -10,7 +10,7 @@ from scipy import ndimage
 from keras.models import Sequential
 
 
-logger.remove()
+# logger.remove()
 logger_format = (
     "<green>{time:DD/MM/YYYY – HH:mm:ss}</green> "
     + "| <lvl>{level: <8}</lvl> "
@@ -18,6 +18,7 @@ logger_format = (
     + "– <lvl>{message}</lvl>"
 )
 logger.add(sys.stdout, colorize=True, format=logger_format)
+
 
 class SudokuExtractor:
     def __init__(self, debug: bool = False):
@@ -196,6 +197,24 @@ class SudokuExtractor:
         logger.debug(f"Return warped image – {type(warped_image)}")
         return warped_image
 
+    def remove_grid(self, image):
+
+        ker = image.shape[0] // 9
+        # Remove horizontal
+        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ker, 1))
+        detected_lines = cv2.morphologyEx(
+            image, cv2.MORPH_OPEN, horizontal_kernel, iterations=9
+        )
+        cnts = cv2.findContours(
+            detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+        for c in cnts:
+            cv2.drawContours(image, [c], -1, (0,), (image.shape[0] // 81 + 2))
+
+        return image
+
     def extract_cells(self, image: np.ndarray) -> list[np.ndarray]:
         """Extracts every cell in the grid.
 
@@ -255,6 +274,8 @@ class SudokuExtractor:
         self,
         model: Sequential,
         cells_list: list[np.ndarray],
+        threshold: int = 400,
+        er: tuple = (3, 3),
     ) -> list[int]:
         """Builds a sudoku board (in the form of a list of list of ints) from
             the given list of grid cells.
@@ -262,7 +283,10 @@ class SudokuExtractor:
         Args:
             model (Sequential): The machine learning model that will predict
                 the value of the digits present in the grid cells.
-            cells_list (list[np.ndarray]): The list of grid cells
+            cells_list (list[np.ndarray]): The list of grid cells.
+            threshold (int, optional): The minimum number of white pixels to
+                consider when searching for a number. Defaults to 400.
+            er (int, optional): The number representing the size of the structuring element. Defaults to (3, 3).
 
         Returns:
             list[int]: The resulting sudoku board. Empty cells are represented
@@ -276,12 +300,17 @@ class SudokuExtractor:
         for column in cells_list:
             temp_column = []  # column to append to board once filled
             for cell in column:
-                cell = cell[5:-5, 5:-5]
+                cell = cell[3:-3, 3:-3]
+
                 denoised_cell = ndimage.median_filter(cell, 3)
 
                 # count white pixels, if below threshold, image is empty
                 white_pixels = np.count_nonzero(denoised_cell)
-                if white_pixels > 600:
+                if white_pixels > threshold:
+
+                    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, er)
+                    cell = cv2.erode(cell, kernel)
+
                     # find contours of cell
                     contours, _ = cv2.findContours(
                         cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -291,12 +320,15 @@ class SudokuExtractor:
                     digit_cntr = max(contours, key=cv2.contourArea)
                     x, y, w, h = cv2.boundingRect(digit_cntr)
 
-                    # draw black background outside digit
-                    mask = np.zeros_like(cell)
-                    cv2.drawContours(mask, [digit_cntr], 0, (255, 255, 255), -1)
+                    # crop image to digit
+                    cell = cell[y : y + h, x : x + w]
 
-                    # apply mask to input image
-                    cell = cv2.bitwise_and(cell, mask)
+                    # find padding to add to number to approach 32×32
+                    t = abs(int(32 - cell.shape[0])) // 2
+                    k = abs(int(32 - cell.shape[1])) // 2
+
+                    # add black borders to image
+                    cell = np.pad(cell, ((t, t), (k, k)), mode="constant")
 
                     # standardize image to input in network
                     mean_px = cell.mean().astype(np.float32)
@@ -319,6 +351,29 @@ class SudokuExtractor:
         logger.debug(f"Sudoku board extracted successfully: {len(board)}")
         return board
 
+    def error_check(self, board: list[int]) -> list[int]:
+        """Asks for user input and corrects the board accordingly
+
+        Args:
+            board (list[int]): The sudoku board.
+
+        Returns:
+            list[int]: The correct board.
+        """
+        correct = input("Has the board been correctly extracted? (Y/n) ")
+        if correct in ["Y", "y", ""]:
+            return board
+
+        if correct in ["N", "n"]:
+            row, col = [int(x) - 1 for x in input("Enter (row, col): ").split(", ")]
+            print(board[row][col])
+
+            replacement = int(input("Enter replacement: "))
+            board[row][col] = replacement
+            print(np.array(board))
+            self.error_check(board)
+        return board
+
 
 # for debugging purposes
 if __name__ == "__main__":
@@ -339,15 +394,21 @@ if __name__ == "__main__":
     # crop+warp image
     image = sxt.warp_image(image, corners)
 
+    image = sxt.remove_grid(image)
+
     # rotate if necessary
     image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     cells = sxt.extract_cells(image)
 
+    print(np.count_nonzero(cells[7][5]))
+
     model = load_model("./source/LeNet5")
-    grid_original = sxt.construct_board(model, cells)
+    # grid_original = sxt.construct_board(model, cells, 400)
+    grid_original = sxt.construct_board(model, cells, 1200)
+    # grid_original = sxt.construct_board(model, cells, 850, (1, 1))
     print(np.array(grid_original))
 
 
 # remove logging so that no logging happens during app.py execution
-logger.remove()
+# logger.remove()

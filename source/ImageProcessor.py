@@ -138,9 +138,9 @@ if __name__ == "__main__":
     ipr = ImageProcessor(debug=True)
 
     # read image and process it
-    image = ipr.read("/source/test_imgs/sudoku.jpg")
+    image = ipr.read("/source/test_imgs/sudoku-pencil.jpg")
     process = ipr.preprocess_image(image)
 
 
 # remove logging so that no logging happens during app.py execution
-logger.remove()
+# logger.remove()
