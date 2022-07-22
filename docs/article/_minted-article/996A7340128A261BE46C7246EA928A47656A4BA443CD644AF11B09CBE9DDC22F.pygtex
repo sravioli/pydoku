@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{cv2}\PYG{o}{.}\PYG{n}{approxPolyDP}\PYG{p}{()}
+\end{Verbatim}
