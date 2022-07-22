@@ -1,0 +1,6 @@
+\frametitle{Limitazioni}
+\begin{itemize}
+        \item nel deformare e appiattire un'immagine già piana, questa viene ruotata di \(90^\circ\) in senso orario;
+        \item nel determinare se una cella è priva o meno di numero, poiché l'algoritmo si basa sul numero di pixel bianchi, a volte l'algoritmo può ignorare celle che contengono dei numeri;
+        \item nel predirre le cifre, la rete neurale confonde il numero \(1\) col numero \(7\) e raramente il numero \(6\) col numero \(5\) o \(8\).
+    \end{itemize}
