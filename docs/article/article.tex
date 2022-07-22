@@ -58,9 +58,9 @@ un'immagine. Per poter fare ciò sono necessari diversi passaggi:
 
 \begin{enumerate}
     \item Fornire un'immagine in input contenente un sudoku;
-    \item Localizzare la griglia del sudoku e estrarla;
+    \item Localizzare la griglia del sudoku ed estrarla;
     \item Data la griglia, individuare ogni singola cella della stessa;
-    \item Determinare se la cella contiene una cifra e se sì effettuare il
+    \item Determinare se la cella contiene una cifra e se sì, effettuare il
         riconoscimento ottico dei caratteri (per brevità OCR);
     \item Risolvere il sudoku mediante un algoritmo;
     \item Mostrare il sudoku risolto all'utente.
@@ -138,12 +138,12 @@ come illustrato in figura~\ref{subfig:warp}.
 
 \section{Analisi delle celle}
 
-Per determinare se una cella contiene un numero o meno è necessario innanzitutto
+Per determinare se una cella contiene un numero oppure non lo contiene è necessario innanzitutto
 estrarre le singole celle dalla griglia piana. Per fare ciò, sono state divise
 per \(9\) le dimensioni della griglia e sono state estratte \(81\) celle di tali
 dimensioni. Attraverso un semplice algoritmo viene verificato se la cella
-contiene un numero o meno. Se la cella contiene un numero, questo viene
-estratto e analizzato dalla rete neurale, la predizione viene inserita nella
+contiene un numero oppure no. Se la cella contiene un numero, questo viene
+estratto e analizzato dalla rete neurale e la predizione viene inserita nella
 lista rappresentante la griglia del sudoku. Se la cella non contiene un numero,
 nella lista viene inserito il numero \(0\).
 
@@ -178,11 +178,11 @@ con una dimensione del lotto di \(86\), esso ha raggiunto un'accuratezza del
 Dopo aver estratto le cifre dalla griglia e aver formato una griglia
 ``digitale'' del sudoku, quest'ultima viene passata alla funzione
 \mintinline{py3}{SudokuSolver.solve()} che risolve il sudoku. Infine viene
-stampata schermo la soluzione.
+stampata a schermo la soluzione.
 
 \section{Limitazioni conosciute}
 
-Poiché l'algoritmo di estrazione della griglia non è perfetto, seguono le
+Poiché l'algoritmo di estrazione della griglia non è perfetto, qui di seguito le
 limitazioni conosciute:
 
 \begin{itemize}

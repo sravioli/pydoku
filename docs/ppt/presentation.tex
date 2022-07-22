@@ -12,6 +12,8 @@
 \usepackage{pgfplots}
 \usepgfplotslibrary{dateplot}
 
+\usepackage{hyperref}
+
 \usepackage{xspace}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 
@@ -40,8 +42,9 @@
 
 \begin{frame}{Modello di Machine Learning}
     Il modello di Machine Learning che è stato utilizzato si ispira alla rete
-    neurale LeNet5+, aggiungendo vari layers arrivando ad un totale di \(10\).\\
+    neurale LeNet5+, aggiungendo vari layers fino ad arrivare ad un totale di \(10\).
 
+    \vfill
     \begin{figure}
         \includegraphics[width=0.9\textwidth, trim = 1cm 4.5cm 0cm 1cm]{architecture.pdf}
     \end{figure}
@@ -116,6 +119,16 @@
         \item nel determinare se una cella è priva o meno di numero, poiché l'algoritmo si basa sul numero di pixel bianchi, a volte l'algoritmo può ignorare celle che contengono dei numeri;
         \item nel predirre le cifre, la rete neurale confonde il numero \(1\) col numero \(7\) e raramente il numero \(6\) col numero \(5\) o \(8\).
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Riepilogo}
+    Il codice sorgente del progetto è disponibile su
+
+    \begin{center}
+        \href{https://www.github.com/sRavioli/pydoku}{github.com/sRavioli/pydoku}
+    \end{center}
+
+    Il progetto è sotto licenza \href{https://www.gnu.org/licenses/gpl-3.0.html}{GNU General Public License v3.0}.
 \end{frame}
 
 \end{document}
