@@ -98,7 +98,7 @@ class SudokuSolver:
 
             for j in range(len(board[0])):
                 if j % 3 == 0:
-                    print(" | ", end=" ")
+                    print(" │ ", end=" ")
 
                 if j == 8:
                     print(str(board[i][j]) + " | ")
