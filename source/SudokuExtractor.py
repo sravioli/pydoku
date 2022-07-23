@@ -197,7 +197,15 @@ class SudokuExtractor:
         logger.debug(f"Return warped image – {type(warped_image)}")
         return warped_image
 
-    def remove_grid(self, image):
+    def remove_grid(self, image: np.ndarray) -> np.ndarray:
+        """Removes grid line from the given image.
+
+        Args:
+            image (np.ndarray): The warped image of a sudoku grid.
+
+        Returns:
+            np.ndarray: The image with the grid line removed.
+        """
 
         ker = image.shape[0] // 9
         # Remove horizontal

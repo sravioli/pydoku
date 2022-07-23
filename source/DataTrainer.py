@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import cv2
 
+from typing import Union
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -40,11 +42,31 @@ logger.add(sys.stdout, colorize=True, format=logger_format)
 
 class Model:
     def __init__(self, debug: bool = False):
+        """A wrapper class which provides various functions useful for the
+            training process of the model.
+
+        Args:
+            debug (bool, optional): Whether to display images or not. Defaults
+                to False.
+        """
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
         pass
 
     def get_model(self, model_name: str = "LeNet5") -> Sequential:
+        """Retrieves the desired model
+
+        Args:
+            model_name (str, optional): The name of the desired model, can be
+                one of the following: ["LeNet5+", "LeNet5", "custom"]. Defaults
+                to "LeNet5".
+
+        Raises:
+            ValueError: When the chosen model is not supported.
+
+        Returns:
+            Sequential: A Sequential() keras model.
+        """
         models = ["LeNet5+", "LeNet5", "custom"]
         if model_name not in models:
             raise ValueError(
@@ -179,6 +201,12 @@ class Model:
         return model
 
     def load_mnist(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """Loads the MNIST dataset, preprocess all the data, then returns it.
+
+        Returns:
+            list[tuple[np.ndarray, np.ndarray]]: A list of 3 tuples each
+                containing (x/y) [training, testing, validation] data.
+        """
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         logger.debug(f"Load MNIST dataset: {self.done}")
 
@@ -216,7 +244,17 @@ class Model:
         )
         return mnist_data
 
-    def standardize_data(self, x_mnist: list[np.ndarray]) -> np.ndarray:
+    def standardize_data(self, x_mnist: list[np.ndarray]) -> list[np.ndarray]:
+        """Normalizes the images in the given dataset.
+
+        Args:
+            x_mnist (list[np.ndarray]): A list containing all the x type MNIST
+                data.
+
+        Returns:
+            list[np.ndarray]: A list containing the normalized x type MNIST
+                data.
+        """
 
         if self.debug:
             logger.debug(f"Show sample image before standardization: {self.done}")
@@ -245,6 +283,12 @@ class Model:
         return data
 
     def get_generator(self) -> ImageDataGenerator:
+        """Retrieves an image generator.
+
+        Returns:
+            ImageDataGenerator: An image generator. Must .fit(x_test) before
+                calling it in model.fit().
+        """
         data_gen = ImageDataGenerator(
             featurewise_center=False,  # set input mean to 0 over the dataset
             samplewise_center=False,  # set each sample mean to 0
@@ -263,6 +307,15 @@ class Model:
         return data_gen
 
     def get_csv_logger(self, filename: str) -> CSVLogger:
+        """Retrieves a CSVLogger pointing to the given filename.
+
+        Args:
+            filename (str): The desired filename for the CSV file
+
+        Returns:
+            CSVLogger: The CSVLogger itself. Must be included in callbacks when
+                training the model.
+        """
         path = Path(__file__).parent / "data"
         path.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Create 'data' directory if not exists: {self.done}")
@@ -274,6 +327,17 @@ class Model:
         return csv_logger
 
     def get_learning_rate(self, mode: int = 1 | 0) -> ReduceLROnPlateau:
+        """Retrieves the desired learning rate.
+
+        Args:
+            mode (int, optional): The desired learning rate. Defaults to 1 | 0.
+
+        Raises:
+            ValueError: Unknown learning rate.
+
+        Returns:
+            ReduceLROnPlateau: The variable learning rate.
+        """
         if mode not in [1, 0]:
             raise ValueError("Unknown learning rate.")
         logger.info(f"Chosen learning rate is available")
@@ -300,11 +364,37 @@ class Model:
         title: str = "Confusion matrix",
         normalize: bool = False,
         cmap: plt.cm = plt.cm.Blues,
-    ) -> None:
+    ) -> Union[plt.Figure, None]:
+        """Either plot or export to CSV the confusion matrix for the given model.
+
+        Args:
+            model (Sequential): The trained model from which to compute the
+                confusion matrix.
+            validation (tuple[np.ndarray, np.ndarray]): The (x/y) validation
+                data.
+            classes (int): The number of classes.
+            action (str, optional): The action to perform, chose one of the
+                following: ["plot", "to_csv"]. Defaults to "to_csv".
+            title (str, optional): The title of the plot. Defaults to
+                "Confusion matrix".
+            normalize (bool, optional): Whether to normalize the confusion
+                matrix or not. Defaults to False.
+            cmap (plt.cm, optional): The color map of the confusion matrix.
+                Defaults to plt.cm.Blues.
+
+        Raises:
+            ValueError: Unknown action.
+
+        Returns:
+            Union[plt.Figure, None]: Based on the chosen action the function
+                will either return a matplotlib.Figure object, or None.
+        """
         actions = ["plot", "to_csv"]
         if action not in actions:
             raise ValueError(f"Unknown action. Chose one of the following: {actions}")
         logger.info(f"Chosen action '{action}' is available")
+
+        classes = range(classes)
 
         # unpack validation data
         x_val, y_val = validation
@@ -359,7 +449,6 @@ class Model:
                 mtrx = pd.DataFrame(confusion_mtrx)
                 mtrx.to_csv("./source/data/confusion_matrix.csv")
 
-            print("I am able to do that")
             return
 
     # def display_errors(self, validation):
@@ -412,7 +501,17 @@ class Model:
 
     def evaluate(
         self, model: Sequential, x_test: np.ndarray, y_test: np.ndarray
-    ) -> None:
+    ) -> str:
+        """Evaluates the given model from the given test data.
+
+        Args:
+            model (Sequential): A trained Sequential() keras model.
+            x_test (np.ndarray): The x test data (images).
+            y_test (np.ndarray): The y test data (labels).
+
+        Returns:
+            str: _description_
+        """
         score = model.evaluate(x_test, y_test, verbose=0)
         final = f"Score: {score[0] * 100}\nModel accuracy: {score[1] * 100}"
         return print(final)
@@ -469,6 +568,5 @@ if __name__ == "__main__":
     model.save(f"./source/{MODEL_NAME}")
 
     Model.evaluate(model, x_test, y_test)
-    Model.confusion_matrix(model, (x_val, y_val), range(10), action="to_csv")
+    Model.confusion_matrix(model, (x_val, y_val), 10, action="to_csv")
     # LeNet.display_errors((x_val, y_val))
-
