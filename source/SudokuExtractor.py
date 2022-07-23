@@ -312,6 +312,10 @@ class SudokuExtractor:
 
                 denoised_cell = ndimage.median_filter(cell, 3)
 
+                cv2.imshow("DEBUG: cell", cv2.resize(denoised_cell, (320, 320)))
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+
                 # count white pixels, if below threshold, image is empty
                 white_pixels = np.count_nonzero(denoised_cell)
                 if white_pixels > threshold:
@@ -345,6 +349,10 @@ class SudokuExtractor:
 
                     # resize to 32×32 for LeNet5
                     cell = cv2.resize(cell, (32, 32), cv2.INTER_CUBIC)
+
+                    cv2.imshow("DEBUG: cell", cv2.resize(cell, (320, 320)))
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
 
                     # make image a 4D tensor for network
                     cell = cell[np.newaxis, :, :, np.newaxis]
@@ -392,7 +400,7 @@ if __name__ == "__main__":
     sxt = SudokuExtractor(debug=True)
 
     # get image and process it
-    original_image = ipr.read("./source/test_imgs/1.jpg")
+    original_image = ipr.read("./source/test_imgs/sudoku-pencil.jpg")
     image = ipr.preprocess_image(original_image)
 
     # get grid contour and grid corners
@@ -405,7 +413,7 @@ if __name__ == "__main__":
     image = sxt.remove_grid(image)
 
     # rotate if necessary
-    image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    # image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     cells = sxt.extract_cells(image)
 
@@ -413,7 +421,7 @@ if __name__ == "__main__":
 
     model = load_model("./source/LeNet5")
     # grid_original = sxt.construct_board(model, cells, 400)
-    grid_original = sxt.construct_board(model, cells, 1200)
+    grid_original = sxt.construct_board(model, cells, 400)
     # grid_original = sxt.construct_board(model, cells, 850, (1, 1))
     print(np.array(grid_original))
 
