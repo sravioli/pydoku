@@ -1,0 +1,73 @@
+absl-py==1.2.0
+astunparse==1.6.3
+black==22.6.0
+cachetools==5.2.0
+certifi==2022.6.15
+charset-normalizer==2.1.0
+click==8.1.3
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1655412516417/work
+cycler==0.11.0
+flatbuffers==1.12
+fonttools==4.34.4
+gast==0.4.0
+google-auth==2.9.1
+google-auth-oauthlib==0.4.6
+google-pasta==0.2.0
+grpcio==1.47.0
+h5py==3.7.0
+idna==3.3
+importlib-metadata==4.12.0
+imutils @ file:///D:/bld/imutils_1639012534095/work
+joblib==1.1.0
+keras==2.9.0
+Keras-Preprocessing==1.1.2
+kiwisolver @ file:///D:/bld/kiwisolver_1657953200729/work
+libclang==14.0.1
+loguru==0.6.0
+Markdown==3.4.1
+matplotlib @ file:///D:/bld/matplotlib-suite_1651609646819/work
+munkres==1.1.4
+mypy-extensions==0.4.3
+numpy==1.23.1
+oauthlib==3.2.0
+opencv-python==4.6.0
+opt-einsum==3.3.0
+packaging==21.3
+pandas @ file:///D:/bld/pandas_1656001279371/work
+pathspec==0.9.0
+Pillow @ file:///D:/bld/pillow_1657007292472/work
+platformdirs==2.5.2
+ply==3.11
+protobuf==3.19.4
+pyasn1==0.4.8
+pyasn1-modules==0.2.8
+pyparsing==3.0.9
+PyQt5==5.15.7
+PyQt5-sip @ file:///D:/bld/pyqt-split_1657234646811/work/pyqt_sip
+python-dateutil==2.8.2
+pytz==2022.1
+requests==2.28.1
+requests-oauthlib==1.3.1
+rsa==4.9
+scikit-learn @ file:///D:/bld/scikit-learn_1652976858669/work
+scipy @ file:///C:/bld/scipy_1653074066186/work
+sip @ file:///D:/bld/sip_1655765083928/work
+six==1.16.0
+tensorboard==2.9.1
+tensorboard-data-server==0.6.1
+tensorboard-plugin-wit==1.8.1
+tensorflow==2.9.1
+tensorflow-estimator==2.9.0
+tensorflow-io-gcs-filesystem==0.26.0
+termcolor==1.1.0
+threadpoolctl==3.1.0
+toml @ file:///home/conda/feedstock_root/build_artifacts/toml_1604308577558/work
+tomli==2.0.1
+tornado @ file:///D:/bld/tornado_1656937934674/work
+typing_extensions==4.3.0
+unicodedata2 @ file:///D:/bld/unicodedata2_1649112114189/work
+urllib3==1.26.10
+Werkzeug==2.1.2
+win32-setctime==1.1.0
+wrapt==1.14.1
+zipp==3.8.1
