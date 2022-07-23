@@ -2,7 +2,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[italian]{babel}
-\usepackage[T1]{fontenc}
+% \usepackage[T1]{fontenc}
 \usepackage{csquotes}
 
 \usepackage[colorlinks=true]{hyperref}
@@ -186,9 +186,20 @@ Poiché l'algoritmo di estrazione della griglia non è perfetto, qui di seguito 
 limitazioni conosciute:
 
 \begin{itemize}
-    \item nel deformare e appiattire un'immagine già piana, questa viene ruotata di \(90^\circ\) in senso orario. Per ovviare a questo inconveniente, è stata aggiunta una rotazione in senso antiorario;
-    \item nel determinare se una cella è priva o meno di numero, poiché l'algoritmo si basa sul numero di pixel bianchi, a volte l'algoritmo può ignorare celle che contengono dei numeri. Per questo motivo la funzione \mintinline{py3}{SudokuExtractor.construct_board()} accetta un parametro opzionale che è proprio il valore minimo di pixel bianchi;
-    \item nel predirre le cifre, la rete neurale confonde il numero \(1\) col numero \(7\) e raramente il numero \(6\) col numero \(5\) o \(8\)\footnote{questo accade quando la parte superiore del numero \(6\) è troppo incurvata verso il basso}
+    \item nel deformare e appiattire un'immagine già piana, questa viene
+        ruotata di \(90^\circ\) in senso orario. Per ovviare a questo
+        inconveniente, è stata aggiunta una rotazione in senso antiorario;
+    \item nel determinare se una cella è priva o meno di numero, poiché
+        l'algoritmo si basa sul numero di pixel bianchi, a volte l'algoritmo
+        può considerare vuote celle che contengono dei numeri. Per questo
+        motivo la funzione \mintinline{py3}{SudokuExtractor.construct_board()}
+        accetta un parametro opzionale che è proprio il valore minimo di pixel
+        bianchi;
+    \item nel predirre le cifre, la rete neurale a volte confonde il numero
+    \(1\) col numero \(7\) e raramente il numero \(6\) col numero \(5\) o \(8\)
+    \footnote{questo accade quando la parte superiore del numero \(6\) è troppo
+    incurvata verso il basso}. Questo problema è probabilmente dovuto al
+    processo di estrazione delle cifre
 \end{itemize}
 
 
