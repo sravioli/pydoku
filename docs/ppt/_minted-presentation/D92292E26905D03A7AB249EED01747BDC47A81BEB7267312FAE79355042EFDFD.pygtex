@@ -1,0 +1,15 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+            ┌─────────┬─────────┬────────┐
+            │  \PYG{l+m}{2} \PYG{l+m}{1} \PYG{l+m}{5}  │  \PYG{l+m}{3} \PYG{l+m}{4} \PYG{l+m}{7}  │  \PYG{l+m}{9} \PYG{l+m}{8} \PYG{l+m}{6} \PYG{p}{|}
+            │  \PYG{l+m}{4} \PYG{l+m}{3} \PYG{l+m}{8}  │  \PYG{l+m}{9} \PYG{l+m}{6} \PYG{l+m}{5}  │  \PYG{l+m}{7} \PYG{l+m}{2} \PYG{l+m}{1} \PYG{p}{|}
+            │  \PYG{l+m}{6} \PYG{l+m}{9} \PYG{l+m}{7}  │  \PYG{l+m}{2} \PYG{l+m}{8} \PYG{l+m}{1}  │  \PYG{l+m}{3} \PYG{l+m}{4} \PYG{l+m}{5} \PYG{p}{|}
+            ├─────────┼─────────┼────────┤
+            │  \PYG{l+m}{9} \PYG{l+m}{8} \PYG{l+m}{6}  │  \PYG{l+m}{5} \PYG{l+m}{7} \PYG{l+m}{4}  │  \PYG{l+m}{2} \PYG{l+m}{1} \PYG{l+m}{3} \PYG{p}{|}
+            │  \PYG{l+m}{5} \PYG{l+m}{7} \PYG{l+m}{3}  │  \PYG{l+m}{8} \PYG{l+m}{1} \PYG{l+m}{2}  │  \PYG{l+m}{4} \PYG{l+m}{6} \PYG{l+m}{9} \PYG{p}{|}
+            │  \PYG{l+m}{1} \PYG{l+m}{4} \PYG{l+m}{2}  │  \PYG{l+m}{6} \PYG{l+m}{3} \PYG{l+m}{9}  │  \PYG{l+m}{8} \PYG{l+m}{5} \PYG{l+m}{7} \PYG{p}{|}
+            ├─────────┼─────────┼────────┤
+            │  \PYG{l+m}{7} \PYG{l+m}{5} \PYG{l+m}{9}  │  \PYG{l+m}{1} \PYG{l+m}{2} \PYG{l+m}{8}  │  \PYG{l+m}{6} \PYG{l+m}{3} \PYG{l+m}{4} \PYG{p}{|}
+            │  \PYG{l+m}{8} \PYG{l+m}{6} \PYG{l+m}{4}  │  \PYG{l+m}{7} \PYG{l+m}{5} \PYG{l+m}{3}  │  \PYG{l+m}{1} \PYG{l+m}{9} \PYG{l+m}{2} \PYG{p}{|}
+            │  \PYG{l+m}{3} \PYG{l+m}{2} \PYG{l+m}{1}  │  \PYG{l+m}{4} \PYG{l+m}{9} \PYG{l+m}{6}  │  \PYG{l+m}{5} \PYG{l+m}{7} \PYG{l+m}{8} \PYG{p}{|}
+            └─────────┴─────────┴────────┘
+\end{Verbatim}

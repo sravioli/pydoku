@@ -1,8 +1,16 @@
+\beamer@slide {fig:lenet}{5}
 \beamer@slide {subfig:input}{7}
 \beamer@slide {sub@subfig:input}{7}
 \beamer@slide {subfig:preprocess}{7}
 \beamer@slide {sub@subfig:preprocess}{7}
+\beamer@slide {fig:pre_process}{7}
 \beamer@slide {subfig:grid}{8}
 \beamer@slide {sub@subfig:grid}{8}
 \beamer@slide {subfig:warp}{8}
 \beamer@slide {sub@subfig:warp}{8}
+\beamer@slide {fig:warp_process}{8}
+\beamer@slide {subfig:cell_pre}{10}
+\beamer@slide {sub@subfig:cell_pre}{10}
+\beamer@slide {subfig:cell_post}{10}
+\beamer@slide {sub@subfig:cell_post}{10}
+\beamer@slide {fig:extraction}{10}
