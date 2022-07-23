@@ -1,5 +1,13 @@
 \documentclass[10pt]{beamer}
 
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+
+\usepackage{datetime2}
+\DTMsetdatestyle{ddmmyyyy}
+\DTMsetup{datesep=/}
+
 \usetheme[progressbar=frametitle]{metropolis}
 \usepackage{appendixnumberbeamer}
 
@@ -19,7 +27,7 @@
 
 \title{Pydoku}
 \subtitle{Un risolutore di sudoku in Python con OpenCV}
-\date{\today}
+\date{\DTMDisplaydate{2022}{07}{22}{}}
 \author{Simone Fidanza}
 \institute{Università degli studi di Bari ``Aldo Moro''}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}

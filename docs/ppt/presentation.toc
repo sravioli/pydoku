@@ -1,3 +1,5 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
 \beamer@sectionintoc {1}{Introduzione}{2}{0}{1}
 \beamer@sectionintoc {2}{Modello}{4}{0}{2}
 \beamer@sectionintoc {3}{Localizzazione della griglia}{6}{0}{3}
