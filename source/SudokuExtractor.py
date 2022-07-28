@@ -312,10 +312,6 @@ class SudokuExtractor:
 
                 denoised_cell = ndimage.median_filter(cell, 3)
 
-                cv2.imshow("DEBUG: cell", cv2.resize(denoised_cell, (320, 320)))
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-
                 # count white pixels, if below threshold, image is empty
                 white_pixels = np.count_nonzero(denoised_cell)
                 if white_pixels > threshold:
@@ -349,10 +345,6 @@ class SudokuExtractor:
 
                     # resize to 32×32 for LeNet5
                     cell = cv2.resize(cell, (32, 32), cv2.INTER_CUBIC)
-
-                    cv2.imshow("DEBUG: cell", cv2.resize(cell, (320, 320)))
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
 
                     # make image a 4D tensor for network
                     cell = cell[np.newaxis, :, :, np.newaxis]
