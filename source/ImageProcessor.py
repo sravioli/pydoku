@@ -93,11 +93,11 @@ class ImageProcessor:
             np.ndarray: The processed image.
         """
         # convert to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        logger.info(f"Convert to RGB: {self.done}")
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # logger.info(f"Convert to RGB: {self.done}")
 
         # grayscale image
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         logger.info(f"Apply grayscale: {self.done}")
 
         # apply Gaussian blur. Kernel must be positive and square
