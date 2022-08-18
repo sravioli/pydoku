@@ -1,14 +1,14 @@
 # for logging
-from loguru import logger
 import sys
 
 # SudokuExtractor
 import cv2
 import numpy as np
 
-from scipy import ndimage
-from keras.models import Sequential
 
+from keras.models import Sequential
+from loguru import logger
+from scipy import ndimage
 
 # logger.remove()
 logger_format = (
@@ -34,7 +34,8 @@ class SudokuExtractor:
     def find_contour(
         self, image: np.ndarray, original_image: np.ndarray = None
     ) -> np.ndarray[(1, 2), np.ndarray[(2,), np.intc]]:
-        """Finds the sudoku grid contour by assuming that the latter is the largest contour in the image.
+        """Finds the sudoku grid contour by assuming that the latter is the
+            largest contour in the image.
 
         Args:
             image (np.ndarray): The processed image from which to extract the
@@ -80,7 +81,8 @@ class SudokuExtractor:
 
         Args:
             grid_contour (np.ndarray): The contour of the sudoku grid.
-            original_image (np.ndarray, optional): The original image, used for debugging purposes. Defaults to None.
+            original_image (np.ndarray, optional): The original image, used for
+            debugging purposes. Defaults to None.
 
         Returns:
             list[tuple[int, int]]: A list containing 4 tuples containing 2
@@ -134,7 +136,7 @@ class SudokuExtractor:
         """
         # to crop the grid the dimension of the latter are needed.
         # Even if the sudoku is a square, calculating the height and width of
-        # the grid ensures that any useful part of the image will not be cropped
+        # the grid ensures that any useful part of the image won't be cropped
 
         # retrieve corners coordinates
         top_left, top_right, bot_right, bot_left = corners
@@ -160,10 +162,13 @@ class SudokuExtractor:
                 + ((top_right[1] - bot_right[1]) ** 2)
             ),
             np.sqrt(
-                ((top_left[0] - bot_left[0]) ** 2) + ((top_left[1] - bot_left[1]) ** 2)
+                ((top_left[0] - bot_left[0]) ** 2)
+                + ((top_left[1] - bot_left[1]) ** 2)  #
             ),
         )
-        logger.debug(f"Get both values of height: {height_A:.3f}, {height_B:.3f}")
+        logger.debug(
+            f"Get both values of height: {height_A:.3f}, {height_B:.3f}",
+        )
 
         # get best width and height
         width, height = (
@@ -190,7 +195,10 @@ class SudokuExtractor:
         logger.debug(f"Warp image – {type(warped_image)}")
 
         if self.debug:
-            cv2.imshow("DEBUG: WARPED IMAGE", cv2.resize(warped_image, (320, 320)))
+            cv2.imshow(
+                "DEBUG: WARPED IMAGE",
+                cv2.resize(warped_image, (320, 320)),
+            )
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -239,7 +247,8 @@ class SudokuExtractor:
         edge_height, edge_width = np.shape(image)[0], np.shape(image)[1]
         cell_edge_height, cell_edge_width = edge_height // 9, edge_width // 9
         logger.debug(
-            f"Find cell height and width: {cell_edge_height}, {cell_edge_width}"
+            f"Find cell height and width: \
+                {cell_edge_height}, {cell_edge_width}"
         )
 
         # iterate through length&width of the image, extract cells and store
@@ -248,29 +257,34 @@ class SudokuExtractor:
         for i in range(cell_edge_height, edge_height + 1, cell_edge_height):
             for j in range(cell_edge_width, edge_width + 1, cell_edge_width):
 
-                rows = image[i - cell_edge_height : i]
+                rows = image[i - cell_edge_height:i]
                 temp_grid.append(
-                    [rows[k][j - cell_edge_width : j] for k in range(len(rows))]
+                    [rows[k][j - cell_edge_width:j] for k in range(len(rows))]
                 )
         logger.debug(f"Create temporary grid of cells – {type(temp_grid)}")
 
         # create final 9×9 array of images
         final_grid = []
         for i in range(0, len(temp_grid) - 8, 9):
-            final_grid.append(temp_grid[i : i + 9])
+            final_grid.append(temp_grid[i:i + 9])
         logger.debug(f"Create final grid of cells – {type(final_grid)}")
 
         # convert every item to a Numpy array
         for i in range(9):
             for j in range(9):
                 final_grid[i][j] = np.array(final_grid[i][j])
-        logger.debug(f"Convert cells to Numpy array – {type(final_grid[0][0])}")
+        logger.debug(
+            f"Convert cells to Numpy array – {type(final_grid[0][0])}",
+        )
 
         if self.debug:
             # when debugging, display random cell
             t, k = list(np.random.randint(0, 8, 2))  # get 2 random in [0, 8]
 
-            cv2.imshow("DEBUG: SAMPLE CELL", cv2.resize(final_grid[t][k], (320, 320)))
+            cv2.imshow(
+                "DEBUG: SAMPLE CELL",
+                cv2.resize(final_grid[t][k], (320, 320)),
+            )
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             logger.debug(f"Show sample image on {t},{k}: {self.done}")
@@ -294,7 +308,8 @@ class SudokuExtractor:
             cells_list (list[np.ndarray]): The list of grid cells.
             threshold (int, optional): The minimum number of white pixels to
                 consider when searching for a number. Defaults to 400.
-            er (int, optional): The number representing the size of the structuring element. Defaults to (3, 3).
+            er (int, optional): The number representing the size of the
+                structuring element. Defaults to (3, 3).
 
         Returns:
             list[int]: The resulting sudoku board. Empty cells are represented
@@ -304,7 +319,7 @@ class SudokuExtractor:
         board = []
         logger.debug(f"Create empty board – {type(board)}, {len(board)}")
 
-        logger.debug(f"Iterating through grid of images...")
+        logger.debug("Iterating through grid of images...")
         for column in cells_list:
             temp_column = []  # column to append to board once filled
             for cell in column:
@@ -329,7 +344,7 @@ class SudokuExtractor:
                     x, y, w, h = cv2.boundingRect(digit_cntr)
 
                     # crop image to digit
-                    cell = cell[y : y + h, x : x + w]
+                    cell = cell[y:y + h, x:x + w]
 
                     # find padding to add to number to approach 32×32
                     t = abs(int(32 - cell.shape[0])) // 2
@@ -373,7 +388,9 @@ class SudokuExtractor:
             return board
 
         if correct in ["N", "n"]:
-            row, col = [int(x) - 1 for x in input("Enter (row, col): ").split(", ")]
+            row, col = [
+                int(x) - 1 for x in input("Enter (row, col): ").split(", ")
+            ]
             print(board[row][col])
 
             replacement = int(input("Enter replacement: "))
@@ -385,8 +402,9 @@ class SudokuExtractor:
 
 # for debugging purposes
 if __name__ == "__main__":
-    import ImageProcessor
     from keras.models import load_model
+
+    import ImageProcessor
 
     ipr = ImageProcessor.ImageProcessor(debug=True)
     sxt = SudokuExtractor(debug=True)

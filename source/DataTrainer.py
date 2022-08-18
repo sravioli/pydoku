@@ -1,34 +1,35 @@
 # for logging
-from loguru import logger
+import itertools
 import sys
 
 # ModelTraining
 from pathlib import Path
-import numpy as np
-import cv2
-
 from typing import Union
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
+import cv2
 import matplotlib.pyplot as plt
-import itertools
+import numpy as np
 import pandas as pd
-
-from tensorflow import keras
-
-from keras.models import load_model
-
+from keras.callbacks import CSVLogger, ReduceLROnPlateau
 from keras.datasets import mnist
-from keras.models import Sequential
-from keras.callbacks import ReduceLROnPlateau, CSVLogger
-from keras.layers import Conv2D, BatchNormalization, Activation, MaxPooling2D
-from keras.layers import Dropout, Flatten, Dense, AveragePooling2D
-from keras.regularizers import L2
+from keras.layers import (
+    Activation,
+    AveragePooling2D,
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    MaxPooling2D,
+)
+from keras.models import Sequential, load_model
 from keras.optimizers import Adam, RMSprop
-
 from keras.preprocessing.image import ImageDataGenerator
-
+from keras.regularizers import L2
+from loguru import logger
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+from tensorflow import keras
 
 logger.remove()
 logger_format = (
@@ -51,7 +52,6 @@ class Model:
         """
         self.debug = debug
         self.done = "\033[92m✓\033[39m"
-        pass
 
     def get_model(self, model_name: str = "LeNet5") -> Sequential:
         """Retrieves the desired model
@@ -70,7 +70,8 @@ class Model:
         models = ["LeNet5+", "LeNet5", "custom"]
         if model_name not in models:
             raise ValueError(
-                f"Unknown model {model_name}. Chose one of the following: {models}"
+                f"Unknown model {model_name}. \
+                Choose one of the following: {models}"
             )
         logger.info(f"Chosen model '{model_name}' is available")
 
@@ -93,7 +94,7 @@ class Model:
                     Activation("relu"),  # apply activation function to output.
                     # 3. Layer – MaxPooling, 32@14x14 ~~~~~~~~~~~~~~~~~~~~~~~~~
                     MaxPooling2D(pool_size=2, strides=2),
-                    Dropout(0.25),  # sets units to 0 with frequency of 0.25, random
+                    Dropout(0.25),  # sets units to 0 with frequency of 0.25
                     # 4 – Convolutional2D, 64@12×12 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     Conv2D(
                         64,
@@ -103,13 +104,18 @@ class Model:
                         kernel_regularizer=L2(0.0005),
                     ),
                     # 5 – Convolutional2D, 64@10×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    Conv2D(filters=64, kernel_size=3, strides=1, use_bias=False),
+                    Conv2D(
+                        filters=64,
+                        kernel_size=3,
+                        strides=1,
+                        use_bias=False,
+                    ),
                     BatchNormalization(),  # maintain mean to 0, std to 1
                     Activation("relu"),  # apply activation function to output.
                     # 6 – MaxPooling2D, 64@5×5 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     MaxPooling2D(pool_size=2, strides=2),
-                    Dropout(0.25),  # randomly set units to 0 with frequency of 0.25
-                    Flatten(),  # flatten input. Does not affect the batch size.
+                    Dropout(0.25),  # randomly set units to 0 with f of 0.25
+                    Flatten(),  # flatten input. Does not affect batch size.
                     # 7 – Dense, 1×256 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     Dense(units=256, use_bias=False),
                     BatchNormalization(),  # maintain mean to 0, std to 1
@@ -141,7 +147,12 @@ class Model:
             model = Sequential(
                 [
                     # 1 – Convolutional2D 6@28×28 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                    Conv2D(6, (3, 3), activation="relu", input_shape=(32, 32, 1)),
+                    Conv2D(
+                        6,
+                        (3, 3),
+                        activation="relu",
+                        input_shape=(32, 32, 1),
+                    ),
                     AveragePooling2D(),
                     # 2 – Convolutional2D, 16@10×10 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
                     Conv2D(16, (3, 3), activation="relu"),
@@ -158,7 +169,12 @@ class Model:
             logger.debug(f"'{model_name}' model has been created")
 
             # define optimizer
-            Optimizer = RMSprop(learning_rate=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+            Optimizer = RMSprop(
+                learning_rate=0.001,
+                rho=0.9,
+                epsilon=1e-08,
+                decay=0.0,
+            )
             model.compile(
                 Optimizer,
                 loss="categorical_crossentropy",
@@ -214,7 +230,9 @@ class Model:
             x_train, y_train, random_state=2022
         )
         logger.debug(
-            f"Split dataset: {x_train.shape}, {y_train.shape[0]} – {x_test.shape}, {y_test.shape[0]} – {x_val.shape}, {y_val.shape[0]}"
+            f"Split dataset: {x_train.shape}, {y_train.shape[0]} \
+                – {x_test.shape}, {y_test.shape[0]} \
+                – {x_val.shape}, {y_val.shape[0]}"
         )
 
         # resize image to 32×32
@@ -223,7 +241,10 @@ class Model:
             np.pad(x_test, ((0, 0), (2, 2), (2, 2)), mode="constant"),
             np.pad(x_val, ((0, 0), (2, 2), (2, 2)), mode="constant"),
         )
-        logger.debug(f"Resize images: {x_train.shape} – {x_test.shape} – {x_val.shape}")
+        logger.debug(
+            f"Resize images: {x_train.shape} \
+            – {x_test.shape} – {x_val.shape}"
+        )
 
         # reshape to 32×32×1
         x_train, x_test, x_val = (
@@ -231,7 +252,10 @@ class Model:
             x_test.reshape(x_test.shape + (1,)),
             x_val.reshape(x_val.shape + (1,)),
         )
-        logger.debug(f"Reshape data: {x_train.shape} – {x_test.shape} – {x_val.shape}")
+        logger.debug(
+            f"Reshape data: {x_train.shape} \
+            – {x_test.shape} – {x_val.shape}"
+        )
 
         # one-hot encode labels
         y_train = keras.utils.to_categorical(y_train, num_classes=10)
@@ -239,9 +263,8 @@ class Model:
         y_val = keras.utils.to_categorical(y_val, num_classes=10)
         logger.debug(f"One-hot encode labels: {self.done}")
 
-        logger.debug(
-            f"Return list of data: {type(mnist_data := [(x_train, y_train), (x_test, y_test), (x_val, y_val)])}"
-        )
+        all_data = [(x_train, y_train), (x_test, y_test), (x_val, y_val)]
+        logger.debug(f"Return list of data: {type(mnist_data := all_data)}")
         return mnist_data
 
     def standardize_data(self, x_mnist: list[np.ndarray]) -> list[np.ndarray]:
@@ -257,10 +280,15 @@ class Model:
         """
 
         if self.debug:
-            logger.debug(f"Show sample image before standardization: {self.done}")
+            logger.debug(
+                f"Show sample image before standardization: {self.done}",
+            )
             j = np.random.randint(0, len(x_mnist))
             k = np.random.randint(0, len(x_mnist[j]))
-            cv2.imshow(f"DEBUG: #{k} BEFORE", cv2.resize(x_mnist[j][k], (320, 320)))
+            cv2.imshow(
+                f"DEBUG: #{k} BEFORE",
+                cv2.resize(x_mnist[j][k], (320, 320)),
+            )
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -274,8 +302,13 @@ class Model:
         logger.debug(f"All images have been standardized: {self.done}")
 
         if self.debug:
-            logger.debug(f"Show sample image after standardization: {self.done}")
-            cv2.imshow(f"DEBUG: #{k} AFTER", cv2.resize(data[j][k], (320, 320)))
+            logger.debug(
+                f"Show sample image after standardization: {self.done}",
+            )
+            cv2.imshow(
+                f"DEBUG: #{k} AFTER",
+                cv2.resize(data[j][k], (320, 320)),
+            )
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
@@ -292,13 +325,13 @@ class Model:
         data_gen = ImageDataGenerator(
             featurewise_center=False,  # set input mean to 0 over the dataset
             samplewise_center=False,  # set each sample mean to 0
-            featurewise_std_normalization=False,  # divide inputs by std of the dataset
+            featurewise_std_normalization=False,  # divide inputs by std
             samplewise_std_normalization=False,  # divide each input by its std
             zca_whitening=False,  # apply ZCA whitening
-            rotation_range=10,  # randomly rotate images in the range (degrees, 0 to 180)
+            rotation_range=10,  # randomly rotate images in the range
             zoom_range=0.1,  # Randomly zoom image
-            width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-            height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+            width_shift_range=0.1,  # randomly shift images horizontally
+            height_shift_range=0.1,  # randomly shift images vertically
             horizontal_flip=False,  # randomly flip images
             vertical_flip=False,  # randomly flip images
         )
@@ -340,16 +373,25 @@ class Model:
         """
         if mode not in [1, 0]:
             raise ValueError("Unknown learning rate.")
-        logger.info(f"Chosen learning rate is available")
+        logger.info("Chosen learning rate is available")
 
         if mode == 1:
-            rate = ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=2)
+            rate = ReduceLROnPlateau(
+                monitor="val_loss",
+                factor=0.2,
+                patience=2,
+            )
             logger.debug(f"Retrieve first learning rate: {self.done}")
 
         else:
             rate = ReduceLROnPlateau(
-                monitor="val_loss", patience=3, verbose=1, factor=0.5, min_lr=0.00001
+                monitor="val_loss",
+                patience=3,
+                verbose=1,
+                factor=0.5,
+                min_lr=1e-05,
             )
+
             logger.debug(f"Retrieve second learning rate: {self.done}")
 
         logger.debug(f"Return variable learning rate: {type(rate)}")
@@ -391,7 +433,9 @@ class Model:
         """
         actions = ["plot", "to_csv"]
         if action not in actions:
-            raise ValueError(f"Unknown action. Chose one of the following: {actions}")
+            raise ValueError(
+                f"Unknown action. Chose one of the following: {actions}",
+            )
         logger.info(f"Chosen action '{action}' is available")
 
         classes = range(classes)
@@ -434,7 +478,7 @@ class Model:
                     i,
                     confusion_mtrx[i, j],
                     horizontalalignment="center",
-                    color="white" if confusion_mtrx[i, j] > thresh else "black",
+                    color="white" if confusion_mtrx[i, j] > thresh else "black"
                 )
 
             plt.tight_layout()
@@ -445,59 +489,11 @@ class Model:
         else:  # export the confusion matrix to csv
             try:
                 Path.unlink("./source/data/confusion_matrix.csv")
-            except:
+            except Exception:
                 mtrx = pd.DataFrame(confusion_mtrx)
                 mtrx.to_csv("./source/data/confusion_matrix.csv")
 
             return
-
-    # def display_errors(self, validation):
-    #     x_val, y_val = validation
-
-    #     y_prediction = model.predict(x_val)
-    #     y_prediction_classes = np.argmax(y_prediction, axis=1)
-
-    #     y_true = np.argmax(y_val, axis=1)
-
-    #     # errors are the difference between predicted labels and true labels
-    #     errors = y_prediction - np.expand_dims(y_true, axis=1) != 0
-
-    #     y_prediction_classes_errors = y_prediction_classes[errors]
-    #     y_prediction_errors = y_prediction[errors]
-    #     y_true_errors = y_true[errors]
-    #     x_val_errors = x_val[errors]
-
-    #     # Probabilities of the wrong predicted numbers
-    #     y_pred_errors_prob = np.max(y_prediction_errors, axis=1)
-
-    #     # Predicted probabilities of the true values in the error set
-    #     true_prob_errors = np.diagonal(
-    #         np.take(y_prediction_errors, y_true_errors, axis=1)
-    #     )
-
-    #     # Difference between the probability of the predicted label and the true label
-    #     delta_pred_true_errors = y_pred_errors_prob - true_prob_errors
-
-    #     # Sorted list of the delta prob errors
-    #     sorted_dela_errors = np.argsort(delta_pred_true_errors)
-
-    #     # Top 6 errors
-    #     most_important_errors = sorted_dela_errors[-6:]
-
-    #     n, rows, cols = 0, 2, 3
-
-    #     fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
-    #     for row in range(rows):
-    #         for col in range(cols):
-    #             error = most_important_errors[n]
-    #             ax[row, col].imshow((x_val_errors[error]).reshape((28, 28)))
-    #             ax[row, col].set_title(
-    #                 "Predicted label :{}\nTrue label :{}".format(
-    #                     y_prediction_classes_errors[error], y_true_errors[error]
-    #                 )
-    #             )
-    #         n += 1
-    #     plt.show()
 
     def evaluate(
         self, model: Sequential, x_test: np.ndarray, y_test: np.ndarray
@@ -548,7 +544,7 @@ if __name__ == "__main__":
 
     try:
         model = load_model(f"./source/{MODEL_NAME}")
-    except:
+    except Exception:
         n = 0
         while True and n < 10:
             # train the model

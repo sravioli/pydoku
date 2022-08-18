@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-from loguru import logger
-from source import ImageProcessor, SudokuExtractor, SudokuSolver
-from keras.models import load_model
-import numpy as np
-
 import cv2
+
+# import numpy as np
+from keras.models import load_model
+from loguru import logger
+
+from source import ImageProcessor, SudokuExtractor, SudokuSolver
 
 logger.remove()
 

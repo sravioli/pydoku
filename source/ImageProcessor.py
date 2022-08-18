@@ -106,7 +106,12 @@ class ImageProcessor:
 
         # image needs to be segmented. one way is thresholding
         image = cv2.adaptiveThreshold(
-            image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            image,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            11,
+            2,
         )
         logger.info(f"Apply threshold: {self.done}")
 
@@ -120,7 +125,10 @@ class ImageProcessor:
         logger.info(f"Morph image: {self.done}")
 
         # dilate image since Gaussian blur and thresholding shrink it
-        kernel = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]], np.uint8)
+        kernel = np.array(
+            [[0.0, 1.0, 0.0], [1.0, 1.0, 1.0], [0.0, 1.0, 0.0]],
+            np.uint8,
+        )
         image = cv2.dilate(image, kernel)
         logger.info(f"Dilate image: {self.done}")
 

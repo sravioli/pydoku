@@ -6,7 +6,8 @@ class SudokuSolver:
         """Finds an empty board cell.
 
         Args:
-            board (list[list[int]]): The sudoku board from which to find an empty cell.
+            board (list[list[int]]): The sudoku board from which to find an
+                empty cell.
 
         Returns:
             tuple[int, int]: The coordinates of the empty cell.
