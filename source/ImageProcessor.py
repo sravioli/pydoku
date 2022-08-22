@@ -92,10 +92,6 @@ class ImageProcessor:
         Returns:
             np.ndarray: The processed image.
         """
-        # convert to RGB
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # logger.info(f"Convert to RGB: {self.done}")
-
         # grayscale image
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         logger.info(f"Apply grayscale: {self.done}")
@@ -104,7 +100,7 @@ class ImageProcessor:
         image = cv2.GaussianBlur(image.copy(), (9, 9), 0)
         logger.info(f"Apply Gaussian blur: {self.done}")
 
-        # image needs to be segmented. one way is thresholding
+        # threshold image to segment it
         image = cv2.adaptiveThreshold(
             image,
             255,
@@ -115,7 +111,7 @@ class ImageProcessor:
         )
         logger.info(f"Apply threshold: {self.done}")
 
-        # to extract grid successfully, invert colors
+        # invert image
         image = cv2.bitwise_not(image, image)
         logger.info(f"Invert image: {self.done}")
 
@@ -148,7 +144,3 @@ if __name__ == "__main__":
     # read image and process it
     image = ipr.read("/source/test_imgs/sudoku-pencil.jpg")
     process = ipr.preprocess_image(image)
-
-
-# remove logging so that no logging happens during app.py execution
-# logger.remove()

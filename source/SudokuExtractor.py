@@ -257,16 +257,16 @@ class SudokuExtractor:
         for i in range(cell_edge_height, edge_height + 1, cell_edge_height):
             for j in range(cell_edge_width, edge_width + 1, cell_edge_width):
 
-                rows = image[i - cell_edge_height:i]
+                rows = image[i - cell_edge_height : i]
                 temp_grid.append(
-                    [rows[k][j - cell_edge_width:j] for k in range(len(rows))]
+                    [rows[k][j - cell_edge_width : j] for k in range(len(rows))]
                 )
         logger.debug(f"Create temporary grid of cells – {type(temp_grid)}")
 
         # create final 9×9 array of images
         final_grid = []
         for i in range(0, len(temp_grid) - 8, 9):
-            final_grid.append(temp_grid[i:i + 9])
+            final_grid.append(temp_grid[i : i + 9])
         logger.debug(f"Create final grid of cells – {type(final_grid)}")
 
         # convert every item to a Numpy array
@@ -344,7 +344,7 @@ class SudokuExtractor:
                     x, y, w, h = cv2.boundingRect(digit_cntr)
 
                     # crop image to digit
-                    cell = cell[y:y + h, x:x + w]
+                    cell = cell[y : y + h, x : x + w]
 
                     # find padding to add to number to approach 32×32
                     t = abs(int(32 - cell.shape[0])) // 2
@@ -388,9 +388,7 @@ class SudokuExtractor:
             return board
 
         if correct in ["N", "n"]:
-            row, col = [
-                int(x) - 1 for x in input("Enter (row, col): ").split(", ")
-            ]
+            row, col = [int(x) - 1 for x in input("Enter (row, col): ").split(", ")]
             print(board[row][col])
 
             replacement = int(input("Enter replacement: "))
@@ -434,7 +432,3 @@ if __name__ == "__main__":
     grid_original = sxt.construct_board(model, cells, 400)
     # grid_original = sxt.construct_board(model, cells, 850, (1, 1))
     print(np.array(grid_original))
-
-
-# remove logging so that no logging happens during app.py execution
-# logger.remove()

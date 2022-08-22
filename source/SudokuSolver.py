@@ -36,7 +36,7 @@ class SudokuSolver:
             bool: Whether or not the given number can be inserted in the given
                 coordinates.
         """
-        # Check row
+        # check row
         for i in range(len(board[0])):
             if board[coords[0]][i] == number and coords[1] != i:
                 return False
@@ -92,6 +92,7 @@ class SudokuSolver:
         Returns:
             str: Prints the sudoku board with grid lines.
         """
+        # print the sudoku board
         print(" ┌─────────┬─────────┬────────┐")
         for i in range(len(board)):
             if i % 3 == 0 and i != 0:
@@ -125,7 +126,11 @@ if __name__ == "__main__":
 
     solver = SudokuSolver()
 
-    # solver.print_board(grid)
+    # unsolved grid
+    solver.print(grid)
+
+    # solve grid
     solver.solve(grid)
-    # print()
+
+    # print solved grid
     solver.print(grid)

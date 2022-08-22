@@ -478,7 +478,7 @@ class Model:
                     i,
                     confusion_mtrx[i, j],
                     horizontalalignment="center",
-                    color="white" if confusion_mtrx[i, j] > thresh else "black"
+                    color="white" if confusion_mtrx[i, j] > thresh else "black",
                 )
 
             plt.tight_layout()
